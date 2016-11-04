@@ -1,0 +1,849 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Stream Status Checker</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
+<script src="jquery.cookie.js"></script>
+<style>
+.box {
+	display: inline-block;
+	height: 62px;
+	width: 181px;
+	margin: 0;
+	border-bottom: 1px solid #000;
+	border-right: 1px solid #000;
+	overflow-x: hidden;
+	overflow-y: auto;
+	vertical-align: top;
+	font-size: 14px;
+	line-height: 100%;
+	box-sizing: border-box;
+	
+}
+
+.list {
+	height: 21px;
+	border-bottom: 1px solid #000;
+	box-sizing: border-box;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+#streamArea { margin: 0; }
+body { margin: 0; }
+
+#controls {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#rearrange, #toggleList {
+	display: inline-block;
+	border: 1px solid #000;
+	width: 50%;
+	text-align: center;
+	margin: 2 0 0 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+#rearrangeExplanation { display: none; } 
+#disablePushB, #testPushB { display: none; }
+#delPBdiv { display: none; }
+.swap1 { border: 1px solid #ADD8E6; }
+
+.disabledText {
+	background: #666;
+	color: #CCC;
+	border: 1px solid #333;
+}
+.favicon { float: left; }
+#dropdownIcon { display: inline-block; height: 14px; }
+#favCheckDiv { width: 120px; }
+.nowrap { display: inline-block; white-space: nowrap; }
+</style>
+</head>
+<body bgcolor="#99999">
+<script type="text/javascript">
+var watchedStreams = [ ];
+var listMode = false;
+var host = "http://" + window.location.host;
+var favicons = true;
+
+//Takes a string representing both stream and site and breaks it into its
+//  two respective parts, denoted by the final dash.
+
+function streamObj(stream, site, streamID) {
+	this.stream = stream;
+	this.site = site;
+	//If no stream ID given, default to empty quotes
+	this.streamID = (typeof streamID !== 'undefined' ? streamID : "");
+	//WIP: Used to send out some sort of alert when stream goes live.
+	//Set everything to true by default so the initial load doesn't explode in alerts.
+	this.wasLive = true;
+}
+
+streamObj.prototype.toString = function streamString() {
+	var strRet = this.stream;
+	if( this.streamID != "" ){ strRet = strRet + ":" + this.streamID; }
+	strRet = strRet + "-" + this.site;
+	return strRet;
+}
+
+function streamFromString(toSplit) {
+    var site = toSplit.slice(-3);
+	toSplit = toSplit.slice(0,-4);
+    
+    var streamID = "";
+	if( toSplit.indexOf(":") > 0 ){
+		streamID = toSplit.split(":")[1];
+		toSplit = toSplit.split(":")[0];
+	}
+    
+	var stream = toSplit;
+    
+    return new streamObj(stream, site, streamID);
+}
+
+function processCookies(){
+	//Loads the saved stream cookie as string, re-saves it to update expiration, and turns into array.
+	if($.cookie("watchedStreams")){
+		var theCookie = $.cookie("watchedStreams").replace("%3B",";")
+		theCookie = theCookie.replace("%3A",":");
+		$.cookie("watchedStreams",theCookie, { expires: 30 });
+		
+		watchedStreams = theCookie.split(";");
+	}
+	
+	if($.cookie("listMode")){
+		//If a cookie exists named "listMode", set the variable "listMode"
+		//	Forces the string to be converted into a boolean.
+		listMode = ($.cookie("listMode") == "true");
+		$.cookie("listMode", listMode, { expires: 30 });
+	}
+	
+	if($.cookie("favicons")){
+		//If a cookie exists named "listMode", set the variable "listMode"
+		//	Forces the string to be converted into a boolean.
+		favicons = ($.cookie("favicons") == "true");
+		$.cookie("favicons", favicons, { expires: 30 });
+	}
+	
+	if($.cookie("pushBullet")){
+		var PBinfo = $.cookie("pushBullet").replace("%3B",";")
+		$("#accessToken").val(PBinfo.split(";")[0]);
+		$("#deviceID").val(PBinfo.split(";")[1]);
+		$("#enablePushB").click();
+	}
+	
+	//Loads each div from the array
+	$.each(watchedStreams, function(num, val) {
+		//Converts each entry into an object
+		var newObject = streamFromString(val);
+		watchedStreams[num] = newObject;
+		
+		var stream = newObject.stream;
+		var site = newObject.site;
+		var streamID = newObject.streamID;
+		
+		//Adds div to stream area
+		$("#streamArea").append("<div id=" + num + " class='info'>Getting " + stream + "'s Info ...</div>");
+		var newDivID = "#" + num;
+		
+		//Sets class to either list or box based on saved display mode
+		var type = ((listMode) ? "list" : "box");
+		$(newDivID).addClass(type);
+
+		$(newDivID).css({background: "orange"});
+	});
+}
+
+//Return a simple div of either site favicon or (site) based on favicon setting
+function getFavicon(site) {
+	if(favicons) {
+		return "<div class='favicon' title='" + site + "'><img width='14' height='14' src='" + host + "/style/" + site + ".ico' alt='(" + site + ")' /></div>";
+	} else {
+		return "<div class='favicon' title='"+site+"'>(" + site + ")</div>"
+	}
+}
+
+//Process clicking on the div to toggle favicons
+function toggleFavicons() {
+	favicons = !favicons;  //Invert variable
+	$("#faviconCheck").prop("checked", favicons); 		//Set checkbox to be the same as favicon variable.
+	$(".favicon").each(function(){						//Go through each "favicon" class div, redo the
+		$(this).html(getFavicon($(this).attr("title")));//   call with site based on div's "title" property
+	});
+	
+	$.cookie("favicons", favicons, { expires: 30 });    //Set cookie so favicon setting persists
+}
+
+function makePopup(stream) {
+	//Makes popup of the stream when it's middle-clicked
+    var width = 640;
+    var height = 360;
+    var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 10;
+    var top = (window.screenY != 'undefined' ? window.screenY : window.screenTop) + 200;
+	var windowFeatures = ",menubar=no,toolbar=no,scrollbars=no,resizable=yes," +
+            "left=" + left + ",top=" + top + "screenX=" + left + ",screenY=" + top;
+
+	windowFeatures = "width=" + width + ",height=" + height + windowFeatures;
+	window.open(host + "/ls.php?s="+stream, stream.split(",")[0], windowFeatures);
+}
+
+//Make API calls to check if stream's live
+function checkStream(toCheck){
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	
+	//Doesn't work with JSONP, but now that regular calls work, it's fine
+    var statusCodeHandler = {
+            //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
+				502: function(a, b, c) { console.log("502 detected."); requestError(a, b, c, toCheck); },
+			//	503: function(a, b, c) { console.log("503 detected."); requestError(a, b, c, toCheck); },
+                504: function(a, b, c) { console.log("504 detected."); requestError(a, b, c, toCheck); }
+			};
+	
+	var errorHandler = function(a, b, c){ requestError(a, b, c, toCheck); };
+	
+	if(site == "ttv"){
+		return $.ajax({
+            type: 'GET',
+			url: 'https://api.twitch.tv/kraken/streams/'+stream.toLowerCase(),
+			timeout: 10000,
+            headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h"},            
+			success: function(data) { handleTwitch(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+		});
+	
+	//UStream API request
+	} else if(site == "utv"){
+        var streamID = tempObj.streamID;
+		return $.ajax({
+            type: 'GET',
+			//url: 'http://einsynd.pw/ustreamAPI.php?stream=' + streamID,
+            url: "http://api.ustream.tv/channels/" + streamID + ".json",
+			timeout: 10000,
+			success: function(data) { handleUStream(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+		});	
+
+	//Hitbox API request
+	} else if(site == "hbx"){
+		return $.ajax({
+			type: 'GET',
+            url: 'http://www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
+			timeout: 10000,
+			success: function(data) { handleHitbox(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+		});
+    //Livestream API request
+	} else if(site == "lst"){
+		return $.ajax({
+			url: 'http://x' + stream + 'x.api.channel.livestream.com/2.0/info.json',
+			dataType: 'jsonp',
+			timeout: 7500,
+			success: function(data) { handleLivestream(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+		});
+    //Beam.PRO API request
+    } else if(site == "bea"){
+        return $.ajax({
+            url: 'https://beam.pro/api/v1/channels/' + stream,
+            timeout: 10000,
+            success: function(data) { handleBeam(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+        });
+	} else if(site == "jtv"){
+		$("#"+toCheck).html(getFavicon(site) + stream + ": Justin.TV has closed.").css({background: "red"});
+	} else {
+		alert("Not supported: site="+site);
+	}
+}
+
+//An attempt to stop undefined function error spam on Twitch check, doesn't seem to work.
+function twitchCallback(data){
+	console.log(data);
+}
+
+//Set div for handled Twitch stream.
+function handleTwitch(data, toCheck) {
+	var divID = "#" + toCheck;
+
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	var wasLive = tempObj.wasLive;
+	var lastStatus = "undefined";
+	if(tempObj.lastStatus != null) {
+		lastStatus = tempObj.lastStatus;
+	}
+	var nowrap = "<div class='nowrap'>";
+	
+	if(typeof data.error !== "undefined"){
+		if( data.error == "Service Unavailable" ){
+			$(divID).html(nowrap + getFavicon(site) + stream + "</div>: Twitch returned error 503, Service Temporarily Unavailable");
+		} else if( data.error == "Not Found" ) {
+			$(divID).html(nowrap + getFavicon(site) + stream + "</div>: Channel not found, possibly deleted by owner.");
+		} else {
+			console.log("Unhandled error: '"+ data.error + "' on #" + toCheck);
+		}
+	} else {
+		if( data.stream != null){
+			//If there's a "stream" variable, the stream is live
+			data = data.stream;
+			if( data.channel.status == null ) {
+				//Twitch keeps sending a shorter API response without the stream title
+				//If we have a saved status from the previous call, just use that, otherwise re-request.
+				if( lastStatus == "undefined" ){
+					//Wait half a second to re-check so it's less spammy.
+					setTimeout(function(){
+						console.log("Status description wasn't sent, re-requesting " + stream + "...");
+						checkStream(toCheck);
+						}, 500);
+					return;
+				} else {
+					console.log("Status description wasn't sent, going with saved status for " + stream);
+					data.channel.status = lastStatus;
+				}
+			}
+			//Save the current status in case next check screws up.
+			watchedStreams[toCheck].lastStatus = data.channel.status;
+			
+			var link = "<a href='"+data.channel.url+"' target='_blank'>";
+            var game = (data.game != null) ? " - " + data.game : "";
+			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game).css({background: "green"});
+            
+            game = (data.game != null) ? " [" + data.game + "]" : "";
+			$(divID).prop("title",data.channel.status + game + " -- " + data.viewers + " viewers.");
+            
+			if( wasLive == false ){
+				watchedStreams[toCheck].wasLive = true;
+				sendAlert(stream, site, data.channel.status);
+			}
+		} else {
+			//It didn't find a "stream" variable, so it must be offline.
+			$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+			$(divID).prop("title","");
+			if( wasLive ) {
+				watchedStreams[toCheck].wasLive = false;
+			}
+		}
+	}
+}
+
+//Set div for handled Livestream streams
+function handleLivestream(data, toCheck) {
+	var divID = "#" + toCheck;
+
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	var wasLive = tempObj.wasLive;
+	
+	if(data.channel.isLive == true){
+		$(divID).html(getFavicon(site) + stream + "[" + data.channel.currentViewerCount + "v] is live!" ).css({background: "green"});
+		if( wasLive == false ){
+			watchedStreams[toCheck].wasLive = true;
+			sendAlert(stream, site, "is now live!");
+		}
+	} else {
+		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		if( wasLive ) {
+			watchedStreams[toCheck].wasLive = false;
+		}
+	}
+}
+
+//Set div for handled UStream streams
+function handleUStream(data, toCheck) {
+	var divID = "#" + toCheck;
+
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	if( tempObj.streamID == "" ){
+		tempObj.streamID = data.id;
+		watchedStreams[toCheck] = tempObj;
+	}
+	var wasLive = tempObj.wasLive;
+
+	if(data.channel.status == "live"){
+		$(divID).html(getFavicon(site) + stream + " is live!" ).css({background: "green"});
+		if( wasLive == false ){
+			watchedStreams[toCheck].wasLive = true;
+			sendAlert(stream, site, "is now live!");
+		}
+	} else {
+		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		if( wasLive ) {
+			watchedStreams[toCheck].wasLive = false;
+		}
+	}
+}
+
+//Set div for handled Hitbox stream.
+function handleHitbox(data, toCheck) {
+	var divID = "#" + toCheck;
+    data = JSON.parse(data);
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	var wasLive = tempObj.wasLive;
+	
+	// Initially had to handle offline separately since it returned a string instead of an array,
+	// but it looks like they've fixed that now. Check for "media_is_live".
+	if( data["livestream"] == null ) { 
+		if( data["error"] == true ){
+            if( data["error_msg"] == "no_media_found" ){
+                $(divID).html(getFavicon(site) + stream + " does not exist");
+            } else {
+                $(divID).html(getFavicon(site) + stream + ": " + data["error_msg"]);
+            }
+		}
+	} else if( data["media_type"] == "live" && data["livestream"][0]["media_is_live"] == "1"){
+		data = data["livestream"][0];
+		link = "<a href='"+data.channel.channel_link+"' target='_blank'>";
+		$(divID).html(getFavicon(site) + link + stream + "</a>[" + data.media_views + "v]: " + data.media_status + ((data.category_name != null) ? " - " + data.category_name : "")).css({background: "green"});
+		$(divID).prop("title",data.media_status + ((data.category_name != null) ? " - " + data.category_name : "") + " -- " + data.media_views + " viewers.");
+		if( wasLive == false ){
+			watchedStreams[toCheck].wasLive = true;
+			sendAlert(stream, site, data.media_status + ((data.category_name != null) ? " - " + data.category_name : ""));
+		}
+	} else {
+		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		$(divID).prop("title","");
+		if( wasLive ) {
+			watchedStreams[toCheck].wasLive = false;
+		}
+	}
+}
+
+function handleBeam(data, toCheck){
+    console.log(data);
+    var divID = "#" + toCheck;
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	var wasLive = tempObj.wasLive;
+    
+    if( data.online == true) {
+        var link = "<a href='//beam.pro/" + stream + "' target='_blank'>";
+        var game = (data.type != null) ? " - " + data.type.name : "";
+        $(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewersCurrent + "v]: " + data.name + game).css({background: "green"});
+        
+        game = (data.type != null) ? " [" + data.type.name + "]" : "";
+        $(divID).prop("title",data.name + game + " -- " + data.viewersCurrent + " viewers.");
+    } else {
+        $(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+    }
+}
+
+//Handle errors that are thrown in a bit of a generic error.
+//	Only seen this used for timeouts, but console.log if it wasn't a timeout.
+//  Should also handle 502 Bad Gateways, but doesn't seem to.
+function requestError(jqXHR, textStatus, errorThrown, toCheck){
+	var divID = "#" + toCheck;
+
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	
+//	console.log( ((textStatus !== undefined) ? textStatus : "_") + "|" + ((errorThrown !== undefined) ? errorThrown : "_") );
+//	console.log(jqXHR);
+	
+	//Handles errors from the AJAX requests.
+	//	Apparently the only error JSONP can throw is Timeout, so. Bluh.
+	if (typeof textStatus === "string"){
+        
+		if (textStatus == "timeout"){
+			$(divID).html(getFavicon(site) + stream + " timed out.");
+			$(divID).css({background: "orange"});
+            
+		} else if (errorThrown == "Service Unavailable") {
+            $(divID).html(getFavicon(site) + stream + ": Unknown (Service Unavailable)");
+            $(divID).css({background: "orange"});
+        } else if (errorThrown == "Bad Request"){
+            if (site == "ttv") {
+                $(divID).html(getFavicon(site) + stream + ": Unknown (Bad Request - Twitch ignored Client ID)");
+            } else {
+                $(divID).html(getFavicon(site) + stream + ": Unknown (Bad Request)");
+            }
+            $(divID).css({background: "orange"});
+        } else if( errorThrown == "Unprocessable Entity" ) {
+            $(divID).html(getFavicon(site) + stream + "</div>: Channel has been closed for TOS violations");
+        } else {
+            console.log(textStatus + ": " + errorThrown);
+        }
+	} else {
+		//If somehow an error was thrown that wasn't a string?
+		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		$(divID).prop("title","");
+		console.log("Request Error: "+textStatus);
+	}
+}
+
+//WIP: Sends alert when stream is live.
+function sendAlert(stream, site, status){
+	//If the Disable PushBullet button is visible, then PushBullet should be enabled, so alert with it.
+	if($("#disablePushB").is(":visible")){
+		if( site != 'einSynd.pw' ) { site = site.toUpperCase(); }
+		title = stream + " is live on " + site + ":";
+		body = status;
+		toSend = {'token': $("#accessToken").val(), 'device': $("#deviceID").val(), 'title': title, 'body': body};
+		$.ajax({
+			url: 'http://einsynd.pw/pushBullet.php',
+			type: 'POST',
+			data: toSend,
+			error: function(a,b,c) { console.log(b + ": " + c); }
+		});			
+	}
+}
+
+//Main function, does all the checking on a timer.
+//Also adds new divs if called from the form.
+function requestCheck(streamNum){
+	//Variable 'streamNum' wasn't passed, must have been called from the add stream form.
+	if (typeof streamNum === "undefined"){
+		stream = $('#checkStream').val();
+		if( stream == "" ){
+			return false;
+		}
+		var site = $('#site').val();
+		var exists = false;
+		
+		//Check each stream div (.info) to see if it already exists.
+		$.each(watchedStreams, function(num, obj) {
+			if( obj.stream == stream ){
+				if( obj.site == site ) {
+					exists = true;
+					return false;
+				}
+			}
+		});
+		
+		//If exists, tell user. Otherwise, make a new div.
+		if( exists ) {
+			alert("This stream is already being checked for.");
+			console.log("Already checked: '" + stream + "' on " + site);
+		} else {
+			//Length returns total number, divs start at zero, so length should be one above what we have.
+			var newDivID = $(".info").length;
+			
+			$("#streamArea").append("<div id='" + newDivID + "' class='info'>Getting " + stream + "'s Info ...</div>");			
+			newDivID = "#" + newDivID;
+			
+			//If there are things with class "list" then add "list" class, otherwise default to "box" class
+			var type = (($(".list").length > 0) ? "list" : "box");
+			$(newDivID).addClass(type);
+			
+			//Creates an object with the div's info.
+			var divObj = new streamObj(stream, site);
+			
+			$(newDivID).css({background: "orange"});
+			
+			watchedStreams.push(divObj);
+			$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+		}
+		
+		//Set "streamNum" to the name of the div's ID so it matches a normal call.
+		streamNum = newDivID.slice(1);
+        
+            //Check for UStream, get ID instead of checking instead.
+            if(site == "utv"){
+                getUstreamID(stream, streamNum);
+                return;
+            }
+	}
+	
+	//Check if it's old Livestream format and convert to new.
+	//	That being, add a T on the end. (ls -> lst)
+	if(watchedStreams[streamNum] == "ls"){
+		console.log("Old Livestream format detected, converting ... (" + watchedStreams[streamNum].stream +")");
+		watchedStreams[streamNum].site = "lst";
+		$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+	}
+	
+	checkStream(streamNum);
+}
+
+//UStream removed easy access to ID, so now I have to fetch it.
+function getUstreamID(stream, streamNum){
+    var tempObj = watchedStreams[streamNum];
+
+    $.ajax({
+        url: 'http://einsynd.pw/ustreamID.php?stream=' + stream,
+        dataType: "jsonp",
+        jsonp: "callback",
+        success: function(data){
+            data = data["id"];
+            console.log("Success, ID: " + data);
+            tempObj.streamID = data;
+            watchedStreams[streamNum] = tempObj;
+            checkStream(streamNum);
+        },
+        error: function(){
+            console.log("UStream ID error, stream: "+ stream + ", div number " + streamNum);
+            alert("Stream does not exist");
+            removeStreamNum(streamNum);
+        },
+        type: "get",
+        timeout: 10000
+    });
+}
+
+//Removes stream div from the page automatically via div number
+function removeStreamNum(streamNum){
+    //Removes the div from the page
+    $("#"+streamNum).remove();
+    //Removes the entry in the stream array
+    watchedStreams.splice(streamNum, 1);
+    
+    //Renumbers the divs so there aren't any holes
+    $.each($(".info"), function(num) {
+        $(this).prop("id", num);
+    });
+    
+    //Set the cookie so it stays gone.
+    $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+}
+
+//Removes stream div from the page via page's form
+function removeStream(){
+	var stream = $('#checkStream').val();
+	var site = $('#site').val();
+	var removed = false;
+	
+	//Loop through the watchedStreams array to check for matching info
+	$.each(watchedStreams, function(id,obj) {
+		var curStream = obj.stream;
+		var curSite = obj.site;
+		
+		if( curStream.toLowerCase() == stream.toLowerCase() ){
+			if( curSite == site ){
+				//	console.log("Matched at #" + $(this).prop("id"));
+				$("#"+id).remove();
+				watchedStreams.splice(id, 1);
+				removed = true;
+				return false;			
+			}
+		} 
+	});
+	
+	//If a stream was removed, re-order the divs and set the cookie
+	if( removed == true ) {
+		$.each($(".info"), function(num) {
+			$(this).prop("id", num);
+		});
+		
+		//Set the cookie so it stays gone.
+		$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+	} else {
+		console.log("No stream found to remove: '" + stream + "' on " + site);
+	}
+}
+
+//Allow swapping of streams
+function editMode() {
+	//If class "swappable" isn't on anything, turn on edit mode, else turn off.
+	if( $(".swappable").length <=0 ){
+		//Add class "swappable" so we know they can do things."
+		$(".info").addClass("swappable");
+		$("#rearrangeExplanation").show();
+		
+		//Bind a click event to all swappable divs
+		$(".swappable").on("click.swapping", function(b){
+			//Only fire on mouse1
+			if( b.which == 1 ){
+				//If there's not already a selected div (class "swap1") then set this to "swap1"
+				//	else, swap the clicked div with that one
+				
+				if( $(".swap1").length <= 0 ){
+					$(this).addClass("swap1"); //CSS makes it 1px white border for attention
+				} else {
+					//Get the ID of first-clicked div and this div
+					var id1 = $(".swap1").prop("id");
+					var id2 = $(this).prop("id");
+					//If they're the same, ignore it, something probably just went screwy.
+					if( id1 != id2 ){
+			
+						//Clone the divs, then replace them
+						var clone1 = $("#"+id1).clone(true);
+						var clone2 = $("#"+id2).clone(true);
+						
+						$("#"+id1).prop("id","s1");
+						$("#"+id2).prop("id","s2");
+						
+						$("#s1").replaceWith(clone2);
+						$("#s2").replaceWith(clone1);
+						
+						//Swap in the arrays and save array to cookie
+						var temp = watchedStreams[id1];
+						watchedStreams[id1] = watchedStreams[id2];
+						watchedStreams[id2] = temp;
+						
+						$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+						
+						//Remove ".swap1" from all divs with that class since a swap was made
+						$(".swap1").removeClass("swap1");
+						
+						//Reset all the ID numbers
+						$.each($(".info"), function(num) {
+							$(this).prop("id", num);
+						});
+					} else {
+						//ID1 == ID2, shouldn't be possible. Log it, just in case.
+						console.log("Just tried to swap, id1 == id2 (" + id1 + ")");
+					}
+					
+				}
+			}
+		});
+	} else {
+		$(".swappable").unbind("click.swapping");
+		$(".swappable").removeClass("swappable");
+		$(".swap1").removeClass("swap1");
+		$("#rearrangeExplanation").hide();
+	}
+}
+
+function toggleList() {
+	if( $(".box").length > 0 ){
+		$(".box").addClass("list").removeClass("box");
+		listMode = true;
+	} else {
+		$(".list").addClass("box").removeClass("list");
+		listMode = false;
+	}
+	
+	$.cookie("listMode", listMode, { expires: 30 });
+}
+
+function middleClick(divID, button) {
+	if( button != 2 ) { return }
+	
+	var tempID = $(divID).prop("id");
+	var stream = watchedStreams[tempID].stream;
+	var streamID = watchedStreams[tempID].streamID;
+	var site = watchedStreams[tempID].site;
+	
+	if( site == "jtv" ){ return false; }
+	
+	if( streamID > 0 ){
+		makePopup(stream + ":" + streamID + "," + site);
+	} else {
+		makePopup(stream + "," + site);
+	}
+}
+
+function enablePB() {
+	$("#enablePushB").hide();
+	$("#disablePushB").show();
+	$("#testPushB").show();
+	$("#accessToken").attr('readonly',true).toggleClass("disabledText");
+	$("#deviceID").attr('readonly',true).toggleClass("disabledText");
+	if( $("#savePB").is(':checked') ){
+		$.cookie("pushBullet", $("#accessToken").val() + ";" + $("#deviceID").val(), { expires: 30 });
+	}
+	$("#savePBdiv").hide();
+	$("#delPBdiv").show();
+}
+
+function disablePB() {
+	$("#enablePushB").show();
+	$("#disablePushB").hide();
+	$("#testPushB").hide();
+	$("#accessToken").attr('readonly',false).toggleClass("disabledText");
+	$("#deviceID").attr('readonly',false).toggleClass("disabledText");
+	if( $("#delPB").is(":checked") ){
+		if($.cookie("pushBullet")){
+			$.removeCookie("pushBullet", null);
+		}
+	}
+	$("#savePBdiv").show();
+	$("#delPBdiv").hide();
+}
+
+$(document).ready(function(){
+	//Load the cookie and process from there.
+	processCookies();
+	
+	//Clicks to stream divs are sent to main streamArea div, which
+	//	filters out middle clicks to open popups for the clicked stream.
+	$("#streamArea").delegate(".info", "mousedown.middle", function(b) { middleClick(this, b.which); });
+	
+	$("#savePBdiv").on("click", function() { $("#savePB").click(); });
+	$("#delPBdiv").on("click", function() { $("#delPB").click(); });
+	
+	//Page just loaded and streams should be loaded from the cookie, so check 'em all.
+	$(".info").each(function(i) {
+		var curID = $(this).prop("id");
+		if (typeof watchedStreams[curID] !== "undefined"){
+			requestCheck(curID);
+		}
+	});
+	
+	//Set dropdown change to trigger changing favicon next to it
+	$("#site").change(function() {
+		var selected = $("#site option:selected").val();
+		$("#dropdownIcon").html(getFavicon(selected));
+	});
+	$("#faviconCheck").prop("checked", favicons); //Set the checkbox based on favicon variable
+	$("#site").change(); //Auto-trigger it to set up the first one.
+	
+	//Set a timer to do automatic checks.
+	setInterval(function(){
+		$(".info").each(function(i) {
+			var curID = $(this).prop("id");
+			//For each type of div with class "info", request a check.
+			if (typeof watchedStreams[curID] !== "undefined"){
+				//Change the words to let you know it's checking, then actually check.
+				$(this).html("Getting " + watchedStreams[curID].stream + "'s Info ...");
+				requestCheck(curID);
+			}
+		});
+	}, 120000); //120,000 milliseconds = 120 seconds = 2 minutes.
+	
+	//Don't actually do anything when the forms are used, just run scripts.
+	$("form").submit(function(event) {event.preventDefault();});
+});
+</script>
+<div id=streamArea></div>
+<div id=controls><div id=rearrange onclick="editMode();">Rearrange</div><div id=toggleList onclick="toggleList();">List Mode</div></div>
+<span id=rearrangeExplanation>Click two divs to swap them, click "Rearrange" again to quit</span>
+<br />
+<form id="checkForm">
+Enter a stream name and select a site to check its status:<br />(or to remove from the list above)<br />
+<input type="text" name="checkStream" value="" id="checkStream" />
+<select name="site" id="site">
+	<option value="ttv" selected>Twitch.TV</option><option value="hbx">Hitbox</option>
+    <option value="bea">Beam.PRO</option>
+	<option value="utv">UStream</option><option value="lst">Livestream</option>
+</select><div id="dropdownIcon"></div><br />
+<input type="submit" value="Check Status" name="submit" id="submit" onclick="requestCheck();" />
+<input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
+<div id="favCheckDiv" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
+List of streams is saved in cookies.<br />
+Middle click the colored box to open a popup for the stream.<br />
+If the description is too long, mouseover the box for a tooltip.<br />
+<br /><!--
+(Optional) Enter a <a href="https://www.pushbullet.com/">PushBullet</a> access token to get alerts when streams go live.<br />
+Device ID is optional. Leaving it blank will send to all devices.<br />
+&nbsp; Token: &nbsp; &nbsp; <input type="text" name="accessToken" value="" id="accessToken" /> (Found <a href="https://www.pushbullet.com/account">here</a> if logged in)<br />
+Device ID: <input type="text" name="deviceID" value="" id="deviceID" />
+<input type="button" value="Enable PushBullet" id="enablePushB" onclick="enablePB();" />
+<input type="button" value="Disable PushBullet" id="disablePushB" onclick="disablePB();" />
+<input type="button" value="Test PushBullet" id="testPushB" onclick="sendAlert('Test Notification', 'einSynd.pw', 'This is a test notification sent from einSynd.pw');" /><br />
+<div id="savePBdiv"><input type="checkbox" value="y" name="savePB" id="savePB" checked />Save Info To Cookie When Enabling</div>
+<div id="delPBdiv"><input type="checkbox" value="y" name="delPB" id="delPB" checked />Delete Cookie When Disabling</div><br />
+-->
+</form>
+</body>
+</html>

@@ -1,0 +1,17 @@
+html { overflow: hidden; }
+
+body {
+   background: #000;
+   /* margin: 0 0 0 0; */
+   margin: 0;
+}
+
+a {text-decoration:none;}
+a:link, a:visited {color:#000;}
+a:hover   {color:#060;}
+a:active  {color:#000;}
+
+.divbot     { bottom: 0px; left: 40%; }
+.divtop     { bottom: 50%; left: 40%; }
+.divleft   { bottom: 0px; left: 20%; }
+.divright { bottom: 0px; left: 70%; }

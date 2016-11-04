@@ -1,0 +1,45 @@
+<html>
+<head>
+<title>Twitch API Tester</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
+</head>
+<body bgcolor="#99999">
+
+<script type="text/javascript">
+var global = "";
+function doCall(){
+    var api = $("#apipath").val();
+    var errorHandler = function(a, b, c){ requestError(a, b, c); };
+    
+    return $.ajax({
+        type: 'GET',
+        url: 'https://api.twitch.tv/kraken/' + api,
+        timeout: 10000,
+        headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h"},            
+        success: function(data) { handleTwitch(data); },
+        error: errorHandler
+    });
+}
+
+function handleTwitch(data){
+    global = data;
+    $("#results").html(JSON.stringify(data));
+}
+
+function requestError(a,b,c){
+    $("#results").html(b + ":<br />" +JSON.stringify(a));
+}
+</script>
+
+    Enter an Twitch.TV API path to see its result
+    <form id='getStream'>
+        https://api.twitch.tv/kraken/<input type="text" name="apipath" id="apipath" />
+        <input type="submit" value="Get Response" name="submit" id="submit" onclick="doCall()"/>
+    </form>
+    <p id="results">Results go here!
+    </p>
+</body>
+<script>
+$("form").submit(function(event) {event.preventDefault();});
+</script>
+</html>
