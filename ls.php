@@ -4,8 +4,8 @@
 //	ini_set('display_errors', 'On');
 //	error_reporting(E_ALL ^ E_STRICT);
 	
-	$stream1 = ""; $site1 = "";
-	$stream2 = ""; $site2 = "";
+	$stream1 = ""; $site1 = ""; $id1 = "";
+	$stream2 = ""; $site2 = ""; $id2 = "";
 	
 	$urlVars = $_GET;
 	
@@ -31,6 +31,11 @@
 		$spl = preg_split('/,/',$stream1);
 		$stream1 = $spl[0];
 		$site1 = $spl[1];
+        if(strpos($stream1,":") !== false) {
+            $spl = preg_split('/:/',$stream1);
+            $stream1 = $spl[0];
+            $id1 = $spl[1];
+        }
 	}
 	$stream1name = $stream1;
 	
@@ -39,6 +44,11 @@
 			$spl = preg_split('/,/',$stream2);
 			$stream2 = $spl[0];
 			$site2 = $spl[1];
+        if(strpos($stream2,":") !== false) {
+            $spl = preg_split('/:/',$stream2);
+            $stream2 = $spl[0];
+            $id2 = $spl[1];
+        }
 		}
 		$stream2name = $stream2;
 	}
@@ -139,8 +149,10 @@
 
 var site1="<?php echo $site1; ?>";
 var stream1="<?php echo $stream1; ?>";
+var id1="<?php echo $id1; ?>";
 var site2="<?php echo $site2; ?>";
 var stream2="<?php echo $stream2; ?>";
+var id2="<?php echo $id2; ?>";
 var vert = "<?php if(isset($vert)){ echo "vert"; } else { echo "horiz"; } ?>";
 var host = "http://" + window.location.host;
 
@@ -179,12 +191,13 @@ function getViewers(stream) {
 }
 
 function getViewersTTV(stream) {
-	//Do a JSONP request for the number of viewers
+	//Do a JSON request for the number of viewers
 	return $.ajax({
 		url: 'https://api.twitch.tv/kraken/streams/' + stream + '/',
 		timeout: 15000,
         headers: {
-            "Client-ID": "glrjuvya5xmg8batkujqtfij53q073h"
+            "Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+            "Accept": "application/vnd.twitchtv.v5+json"
         },
 		success: function(data){
 			if(data.stream != null){
@@ -237,7 +250,7 @@ function makeChat(stream,streamSite) {
 	}
 }
 
-function makeStream(streamToMake, makeSite, whatDiv, size, streamName) {
+function makeStream(streamToMake, makeSite, whatDiv, size) {
 	var useSWFObj = true;
 	var flashVars = "";
 	
@@ -414,34 +427,21 @@ $(window).resize(function(){
 	setBlockingDiv("stream1");
 });
 
-function changeStream(newStream, newSite, which){
-	var otherStream, otherSite, other, side, otherName = "";
-	var newName = "";
-	
-	if( newStream.indexOf(":") > -1 ){
-		newName = newStream.split(":")[0];
-		newStream = newStream.split(":")[1];
-	} else {
-		newName = newStream;
-	}
+function changeStream(newStream, newSite, newId, which){
+	var otherStream = "", otherSite = "", other = "", side = "", otherID = "";
 
 	if(which=="1"){
 		otherStream = stream2;
 		otherSite = site2;
+        otherId = id2;
 		other = "2";
 		side = "#left";
 	} else {
 		otherStream = stream1;
 		otherSite = site1;
+        otherId = id1;
+        other = "1";
 		side = "#right";
-		other = "1";
-	}
-	
-	if( otherStream.indexOf(":") > -1 ){
-		otherName = otherStream.split(":")[0];
-		otherStream = otherStream.split(":")[1];
-	} else {
-		otherName = otherStream;
 	}
 	
 	if (newStream == "none") {
@@ -470,19 +470,24 @@ function changeStream(newStream, newSite, which){
 			}
 			$("#vert").hide()
 			
-			document.title = otherName + " viewing page";
+			document.title = otherStream + " viewing page";
 		}
 	} else {
+        console.log(newStream);
 		//Looks like we're adding or changing a stream.
 		if(otherStream != "none") {
 			//There's already another stream, time to make it a dual stream.
 			resizeDual();
-			makeStream(newStream, newSite, which, vert, newName);
+            if( newSite === "utv" ){
+               makeStream(newId, newSite, which, vert);
+            } else {
+                makeStream(newStream, newSite, which, vert);
+            }
 			
 			$(".hiddenMid").hide();
 			$("#vert").show();
 			$("#centerDiv").width("65px");
-			document.title = newName + " and " + otherName + " dual viewing page";
+			document.title = newStream + " and " + otherStream + " dual viewing page";
 		} else {
 			//New stream is the only stream, make sure it's maximized.
 			$(".hiddenMid").show();
@@ -498,11 +503,17 @@ function changeStream(newStream, newSite, which){
 				$("#achatMid"+which).hide();
 			}
 			$("#achatMid"+other).hide();
-			makeStream(newStream, newSite, which, "single", newName);
-			if( newSite == "rec" ) { 
-				document.title = newName + " recording #" + newStream + " viewing page";
+            
+			if( newSite === "utv" || newSite == "rec"){
+               makeStream(newId, newSite, which, "single");
+            } else {
+                makeStream(newStream, newSite, which, "single");
+            }
+			
+            if( newSite == "rec" ) { 
+				document.title = newStream + " recording #" + newId + " viewing page";
 			} else { 
-				document.title = newName + " viewing page";
+				document.title = newStream + " viewing page";
 			}
 
 		}
@@ -574,16 +585,16 @@ $(document).ready(function(){
 	
 	//Spawn the streams
 	if(stream2 != "none"){
-		changeStream(stream1, site1, "1");
-		changeStream(stream2, site2, "2");
+		changeStream(stream1, site1, id1, "1");
+		changeStream(stream2, site2, id2, "2");
 		$("#vert").show();
 	} else {
-		changeStream(stream1, site1, "1");
+		changeStream(stream1, site1, id1, "1");
 		$("#centerDiv").width("90px");
 	
 		//It's a solo stream, if Twitch, check the viewers immediately.
 		if(site1 == "ttv") {
-			getViewers(stream1);
+			getViewers(id1);
 		}
 	}
 	
@@ -679,11 +690,11 @@ $(document).ready(function(){
 		
 		if(stream1 != "none"){
 			if(site1 == "ttv"){
-				return getViewers(stream1);
+				return getViewers(id1);
 			}
 		} else {
 			if(site2 == "ttv"){
-				return getViewers(stream2);
+				return getViewers(id2);
 			}		
 		}
 	}, 2 * 60 * 1000); //... every 2 minutes

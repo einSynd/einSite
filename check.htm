@@ -211,7 +211,7 @@ function checkStream(toCheck){
 	if(site == "ttv"){
         var streamID = tempObj.streamID;
         if( streamID == "undefined" || streamID == ""){
-            console.log("Checking ID instead");
+//          console.log("Twitch stream without ID, requesting instead of checking");
             getTwitchID(stream, toCheck);
             return;
         }
@@ -438,7 +438,7 @@ function handleHitbox(data, toCheck) {
 }
 
 function handleBeam(data, toCheck){
-    console.log(data);
+//  console.log(data);
     var divID = "#" + toCheck;
 	var tempObj = watchedStreams[toCheck];
 	var stream = tempObj.stream;
@@ -601,7 +601,7 @@ function getTwitchID(stream, streamNum){
         type: "get",
         timeout: 10000,
         success: function(data){
-            console.log("Twitch ID, Success");
+//          console.log("Twitch ID Successfully requested");
             data = data["_id"];
             tempObj.streamID = data;
             watchedStreams[streamNum] = tempObj;
@@ -777,7 +777,7 @@ function middleClick(divID, button) {
 	
 	if( site == "jtv" ){ return false; }
 	
-	if( streamID > 0 && site !== "ttv"){
+	if( streamID > 0 ){
 		makePopup(stream + ":" + streamID + "," + site);
     } else {
 		makePopup(stream + "," + site);
