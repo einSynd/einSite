@@ -777,9 +777,9 @@ function middleClick(divID, button) {
 	
 	if( site == "jtv" ){ return false; }
 	
-	if( streamID > 0 ){
+	if( streamID > 0 && site !== "ttv"){
 		makePopup(stream + ":" + streamID + "," + site);
-	} else {
+    } else {
 		makePopup(stream + "," + site);
 	}
 }
