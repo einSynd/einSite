@@ -209,11 +209,19 @@ function checkStream(toCheck){
 	var errorHandler = function(a, b, c){ requestError(a, b, c, toCheck); };
 	
 	if(site == "ttv"){
+        var streamID = tempObj.streamID;
+        if( streamID == "undefined" || streamID == ""){
+            console.log("Checking ID instead");
+            getTwitchID(stream, toCheck);
+            return;
+        }
+        
 		return $.ajax({
             type: 'GET',
-			url: 'https://api.twitch.tv/kraken/streams/'+stream.toLowerCase(),
+			url: 'https://api.twitch.tv/kraken/streams/'+streamID,
 			timeout: 10000,
-            headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h"},            
+            headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+                       "Accept": "application/vnd.twitchtv.v5+json"},            
 			success: function(data) { handleTwitch(data, toCheck); },
 			error: errorHandler,
 			statusCode: statusCodeHandler
@@ -280,8 +288,11 @@ function handleTwitch(data, toCheck) {
 	var tempObj = watchedStreams[toCheck];
 	var stream = tempObj.stream;
 	var site = tempObj.site;
+    var streamID = tempObj.streamID;
+    
 	var wasLive = tempObj.wasLive;
 	var lastStatus = "undefined";
+    
 	if(tempObj.lastStatus != null) {
 		lastStatus = tempObj.lastStatus;
 	}
@@ -561,6 +572,10 @@ function requestCheck(streamNum){
                 getUstreamID(stream, streamNum);
                 return;
             }
+            if(site == "ttv"){
+                getTwitchID(stream, streamNum);
+                return;
+            }
 	}
 	
 	//Check if it's old Livestream format and convert to new.
@@ -572,6 +587,32 @@ function requestCheck(streamNum){
 	}
 	
 	checkStream(streamNum);
+}
+
+//Oh boy, just what I always wanted. Twitch API now requires an ID instead of a name.
+//No documentation in their infinite wisdom, so ask for v3
+function getTwitchID(stream, streamNum){
+    var tempObj = watchedStreams[streamNum];
+    
+    $.ajax({
+        url: 'https://api.twitch.tv/kraken/channels/' + stream.toLowerCase(),
+        headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+                  "Accept": "application/vnd.twitchtv.v3+json"}, 
+        type: "get",
+        timeout: 10000,
+        success: function(data){
+            console.log("Twitch ID, Success");
+            data = data["_id"];
+            tempObj.streamID = data;
+            watchedStreams[streamNum] = tempObj;
+            checkStream(streamNum);
+        },
+        error: function(){
+            console.log("Twitch ID error, stream: " + stream + ", div number " + streamNum);
+            alert("Twitch stream does not exist?");
+            removeStreamNum(streamNum);
+        },
+    })
 }
 
 //UStream removed easy access to ID, so now I have to fetch it.

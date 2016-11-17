@@ -11,11 +11,15 @@ function doCall(){
     var api = $("#apipath").val();
     var errorHandler = function(a, b, c){ requestError(a, b, c); };
     
+    var version = $("#version option:selected").val();
+    version = "application/vnd.twitchtv."+version+"+json";
+    
     return $.ajax({
         type: 'GET',
         url: 'https://api.twitch.tv/kraken/' + api,
         timeout: 10000,
-        headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h"},            
+        headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+                  "Accept": version},
         success: function(data) { handleTwitch(data); },
         error: errorHandler
     });
@@ -34,6 +38,10 @@ function requestError(a,b,c){
     Enter an Twitch.TV API path to see its result
     <form id='getStream'>
         https://api.twitch.tv/kraken/<input type="text" name="apipath" id="apipath" />
+        <select name="version" id="version">
+            <option value="v3">v3</option>
+            <option value="v5">v5</option>
+        </select>
         <input type="submit" value="Get Response" name="submit" id="submit" onclick="doCall()"/>
     </form>
     <p id="results">Results go here!
