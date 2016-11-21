@@ -4,6 +4,8 @@
  *	Site: TTV, LST, UST, HBX
  *	Type: Status (more TBA, default if excluded)
  *	Streams: Comma-separated list of streams to check
+ *
+ *  Used to be used in a WIP version of check.htm, but didn't work out
 */
 
 ini_set('display_errors', 'On');
