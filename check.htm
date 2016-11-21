@@ -201,9 +201,9 @@ function checkStream(toCheck){
 	//Doesn't work with JSONP, but now that regular calls work, it's fine
     var statusCodeHandler = {
             //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
-				502: function(a, b, c) { console.log("502 detected."); requestError(a, b, c, toCheck); },
-			//	503: function(a, b, c) { console.log("503 detected."); requestError(a, b, c, toCheck); },
-                504: function(a, b, c) { console.log("504 detected."); requestError(a, b, c, toCheck); }
+				502: function(a, b, c) { console.log("502 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
+				503: function(a, b, c) { console.log("503 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
+                504: function(a, b, c) { console.log("504 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); }
 			};
 	
 	var errorHandler = function(a, b, c){ requestError(a, b, c, toCheck); };
@@ -589,23 +589,29 @@ function requestCheck(streamNum){
 	checkStream(streamNum);
 }
 
-//Oh boy, just what I always wanted. Twitch API now requires an ID instead of a name.
-//No documentation in their infinite wisdom, so ask for v3
+//Twitch API requires ID as of v5. Luckily they eventually added an API to find it.
 function getTwitchID(stream, streamNum){
     var tempObj = watchedStreams[streamNum];
     
     $.ajax({
-        url: 'https://api.twitch.tv/kraken/channels/' + stream.toLowerCase(),
+        url: 'https://api.twitch.tv/kraken/users?login=' + stream.toLowerCase(),
         headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
-                  "Accept": "application/vnd.twitchtv.v3+json"}, 
+                  "Accept": "application/vnd.twitchtv.v5+json"}, 
         type: "get",
         timeout: 10000,
         success: function(data){
 //          console.log("Twitch ID Successfully requested");
-            data = data["_id"];
-            tempObj.streamID = data;
-            watchedStreams[streamNum] = tempObj;
-            checkStream(streamNum);
+            //Good news, it returns properly if there were no results.
+            if( data["_total"] === 0 ){
+                console.log("Twitch ID success, doesn't exist. stream: " + stream + ", div number " + streamNum);
+                alert("Twitch stream " + stream + " does not exist");
+                removeStreamNum(streamNum);
+            } else {
+                data = data["users"][0]["_id"];
+                tempObj.streamID = data;
+                watchedStreams[streamNum] = tempObj;
+                checkStream(streamNum);
+            }
         },
         error: function(){
             console.log("Twitch ID error, stream: " + stream + ", div number " + streamNum);
