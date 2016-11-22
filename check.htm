@@ -521,23 +521,29 @@ function twitchCheck(twitchIDList, twitchStreams){
     });    
 }
 
+//Handles the return from the API request
 function handleMassTwitch(data, twitchStreams){
     var nowrap = "<div class='nowrap'>";
     var favicon = getFavicon("ttv");
     data = data.streams;
     
+    //Foreach through the returned live streams
     $.each(data, function(index,response){
         var twitchID = response.channel._id;
+        var thisStream = twitchStreams[twitchID];
         var link = "<a href='"+response.channel.url+"' target='_blank'>";
         var game = (response.game != null) ? " - " + response.game : "";
-        twitchStreams[twitchID].status = nowrap + favicon + link + name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
+        thisStream.status = nowrap + favicon + link + thisStream.name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
         
+        //Change the "game" to fit better for a tooltip
         game = (data.game != null) ? " [" + data.game + "]" : "";
-        twitchStreams[twitchID].tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
+        thisStream.tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
     });
     
+    //Foreach through all of the Twitch streams
     $.each(twitchStreams, function(index,twitch){
         divID = "#" + twitch.divID;
+        //If it wasn't live, its status should still be "Offline"
         if( twitch.status === "Offline") {
             $(divID).html(favicon + twitch.name + ": Offline").css({background: "red"});
 			$(divID).prop("title","");
