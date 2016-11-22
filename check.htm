@@ -71,9 +71,7 @@ var listMode = false;
 var host = "http://" + window.location.host;
 var favicons = true;
 
-//Takes a string representing both stream and site and breaks it into its
-//  two respective parts, denoted by the final dash.
-
+//Creates an object out of stream, site, and ID
 function streamObj(stream, site, streamID) {
 	this.stream = stream;
 	this.site = site;
@@ -84,6 +82,7 @@ function streamObj(stream, site, streamID) {
 	this.wasLive = true;
 }
 
+//Returns a streamObj's information as stream:id-site
 streamObj.prototype.toString = function streamString() {
 	var strRet = this.stream;
 	if( this.streamID != "" ){ strRet = strRet + ":" + this.streamID; }
@@ -91,6 +90,8 @@ streamObj.prototype.toString = function streamString() {
 	return strRet;
 }
 
+//Takes a string representing both stream and site and breaks it into its
+//  two respective parts, denoted by the final dash.
 function streamFromString(toSplit) {
     var site = toSplit.slice(-3);
 	toSplit = toSplit.slice(0,-4);
@@ -179,8 +180,8 @@ function toggleFavicons() {
 	$.cookie("favicons", favicons, { expires: 30 });    //Set cookie so favicon setting persists
 }
 
+//Makes popup of the stream when it's middle-clicked
 function makePopup(stream) {
-	//Makes popup of the stream when it's middle-clicked
     var width = 640;
     var height = 360;
     var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 10;
@@ -198,7 +199,6 @@ function checkStream(toCheck){
 	var stream = tempObj.stream;
 	var site = tempObj.site;
 	
-	//Doesn't work with JSONP, but now that regular calls work, it's fine
     var statusCodeHandler = {
             //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
 				502: function(a, b, c) { console.log("502 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
@@ -274,11 +274,6 @@ function checkStream(toCheck){
 	} else {
 		alert("Not supported: site="+site);
 	}
-}
-
-//An attempt to stop undefined function error spam on Twitch check, doesn't seem to work.
-function twitchCallback(data){
-	console.log(data);
 }
 
 //Set div for handled Twitch stream.
@@ -437,6 +432,7 @@ function handleHitbox(data, toCheck) {
 	}
 }
 
+//Set div for handled Beam stream.
 function handleBeam(data, toCheck){
 //  console.log(data);
     var divID = "#" + toCheck;
@@ -501,6 +497,57 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
 	}
 }
 
+//Sends a single API hit for all checked Twitch streams' statuses.
+function twitchCheck(twitchIDList, twitchStreams){
+
+    var statusCodeHandler = {
+    //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
+        502: function(a, b, c) { console.log("502 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
+        503: function(a, b, c) { console.log("503 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
+        504: function(a, b, c) { console.log("504 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); }
+    };
+	
+	var errorHandler = function(a, b, c){ requestError(a, b, c, toCheck); };
+
+    return $.ajax({
+        type: 'GET',
+        url: 'https://api.twitch.tv/kraken/streams?limit=100&channel='+twitchIDList,
+        timeout: 10000,
+        headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+                   "Accept": "application/vnd.twitchtv.v5+json"},            
+        success: function(data) { handleMassTwitch(data, twitchStreams); },
+        error: errorHandler,
+        statusCode: statusCodeHandler
+    });    
+}
+
+function handleMassTwitch(data, twitchStreams){
+    var nowrap = "<div class='nowrap'>";
+    var favicon = getFavicon("ttv");
+    data = data.streams;
+    
+    $.each(data, function(index,response){
+        var twitchID = response.channel._id;
+        var link = "<a href='"+response.channel.url+"' target='_blank'>";
+        var game = (response.game != null) ? " - " + response.game : "";
+        twitchStreams[twitchID].status = nowrap + favicon + link + name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
+        
+        game = (data.game != null) ? " [" + data.game + "]" : "";
+        twitchStreams[twitchID].tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
+    });
+    
+    $.each(twitchStreams, function(index,twitch){
+        divID = "#" + twitch.divID;
+        if( twitch.status === "Offline") {
+            $(divID).html(favicon + twitch.name + ": Offline").css({background: "red"});
+			$(divID).prop("title","");
+        } else {
+            $(divID).html(twitch.status).css({background: "green"});
+            $(divID).prop("title",twitch.tooltip);
+        }
+    });
+}
+
 //WIP: Sends alert when stream is live.
 function sendAlert(stream, site, status){
 	//If the Disable PushBullet button is visible, then PushBullet should be enabled, so alert with it.
@@ -518,66 +565,104 @@ function sendAlert(stream, site, status){
 	}
 }
 
-//Main function, does all the checking on a timer.
-//Also adds new divs if called from the form.
-function requestCheck(streamNum){
-	//Variable 'streamNum' wasn't passed, must have been called from the add stream form.
-	if (typeof streamNum === "undefined"){
-		stream = $('#checkStream').val();
-		if( stream == "" ){
-			return false;
-		}
-		var site = $('#site').val();
-		var exists = false;
-		
-		//Check each stream div (.info) to see if it already exists.
-		$.each(watchedStreams, function(num, obj) {
-			if( obj.stream == stream ){
-				if( obj.site == site ) {
-					exists = true;
-					return false;
-				}
-			}
-		});
-		
-		//If exists, tell user. Otherwise, make a new div.
-		if( exists ) {
-			alert("This stream is already being checked for.");
-			console.log("Already checked: '" + stream + "' on " + site);
-		} else {
-			//Length returns total number, divs start at zero, so length should be one above what we have.
-			var newDivID = $(".info").length;
-			
-			$("#streamArea").append("<div id='" + newDivID + "' class='info'>Getting " + stream + "'s Info ...</div>");			
-			newDivID = "#" + newDivID;
-			
-			//If there are things with class "list" then add "list" class, otherwise default to "box" class
-			var type = (($(".list").length > 0) ? "list" : "box");
-			$(newDivID).addClass(type);
-			
-			//Creates an object with the div's info.
-			var divObj = new streamObj(stream, site);
-			
-			$(newDivID).css({background: "orange"});
-			
-			watchedStreams.push(divObj);
-			$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
-		}
-		
-		//Set "streamNum" to the name of the div's ID so it matches a normal call.
-		streamNum = newDivID.slice(1);
+//Adds a new stream from given info.
+//Used to be part of requestCheck. Not sure why.
+function addStream() {
+    var streamNum;
+    
+    stream = $('#checkStream').val();
+    if( stream == "" ){
+        return false;
+    }
+    var site = $('#site').val();
+    var exists = false;
+    
+    //Check each stream div (.info) to see if it already exists.
+    $.each(watchedStreams, function(num, obj) {
+        if( obj.stream == stream ){
+            if( obj.site == site ) {
+                exists = true;
+                return false;
+            }
+        }
+    });
+    
+    //If exists, tell user. Otherwise, make a new div.
+    if( exists ) {
+        alert("This stream is already being checked for.");
+        console.log("Already checked: '" + stream + "' on " + site);
+    } else {
+        //Length returns total number, divs start at zero, so length should be one above what we have.
+        var newDivID = $(".info").length;
         
-            //Check for UStream, get ID instead of checking instead.
-            if(site == "utv"){
-                getUstreamID(stream, streamNum);
-                return;
+        $("#streamArea").append("<div id='" + newDivID + "' class='info'>Getting " + stream + "'s Info ...</div>");			
+        newDivID = "#" + newDivID;
+        
+        //If there are things with class "list" then add "list" class, otherwise default to "box" class
+        var type = (($(".list").length > 0) ? "list" : "box");
+        $(newDivID).addClass(type);
+        
+        //Creates an object with the div's info.
+        var divObj = new streamObj(stream, site);
+        
+        $(newDivID).css({background: "orange"});
+        
+        watchedStreams.push(divObj);
+        $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+    }
+    
+    //Set "streamNum" to the name of the div's ID so it matches a normal call.
+    streamNum = newDivID.slice(1);
+    
+    //Check for UStream/Twitch, get ID instead of checking instead.
+    if(site == "utv"){
+        getUstreamID(stream, streamNum);
+        return;
+    } else if(site == "ttv"){
+        getTwitchID(stream, streamNum);
+        return;
+    }
+    
+    requestCheck(streamNum)
+}
+
+//Request checks for non-Twitch streams while putting all Twitch streams
+//into an array to check all at once.
+function prepareCheck(){
+    var twitchStreams = { };
+    var twitchIDs = [ ];
+    var twitchIDList;
+    
+    $(".info").each(function(i) {
+        var curID = $(this).prop("id");
+        //For each type of div with class "info", request a check.
+        if (typeof watchedStreams[curID] !== "undefined"){
+            //Change the words to let you know it's checking, then actually check.
+            $(this).html("Getting " + watchedStreams[curID].stream + "'s Info ...");
+            
+            if( watchedStreams[curID].site == "ttv") {
+                //Twitch stream, add to temp array and set all status to offline,
+                //which will be overwritten if a check is found successful
+                var index = watchedStreams[curID].streamID;
+                twitchStreams[index] = {
+                    divID: curID,
+                    name: watchedStreams[curID].stream,
+                    status: "Offline",
+                    tooltip: ""
+                };
+
+                twitchIDs.push(watchedStreams[curID].streamID);
+            } else {
+                requestCheck(curID);
             }
-            if(site == "ttv"){
-                getTwitchID(stream, streamNum);
-                return;
-            }
-	}
-	
+        }
+    });
+    twitchIDList = twitchIDs.join(",")
+    twitchCheck(twitchIDList, twitchStreams);
+}
+
+//Performs minor maintenance before directly checking for a stream.
+function requestCheck(streamNum){
 	//Check if it's old Livestream format and convert to new.
 	//	That being, add a T on the end. (ls -> lst)
 	if(watchedStreams[streamNum] == "ls"){
@@ -834,12 +919,13 @@ $(document).ready(function(){
 	$("#delPBdiv").on("click", function() { $("#delPB").click(); });
 	
 	//Page just loaded and streams should be loaded from the cookie, so check 'em all.
-	$(".info").each(function(i) {
+/*	$(".info").each(function(i) {
 		var curID = $(this).prop("id");
 		if (typeof watchedStreams[curID] !== "undefined"){
 			requestCheck(curID);
 		}
 	});
+*/  prepareCheck();
 	
 	//Set dropdown change to trigger changing favicon next to it
 	$("#site").change(function() {
@@ -851,15 +937,7 @@ $(document).ready(function(){
 	
 	//Set a timer to do automatic checks.
 	setInterval(function(){
-		$(".info").each(function(i) {
-			var curID = $(this).prop("id");
-			//For each type of div with class "info", request a check.
-			if (typeof watchedStreams[curID] !== "undefined"){
-				//Change the words to let you know it's checking, then actually check.
-				$(this).html("Getting " + watchedStreams[curID].stream + "'s Info ...");
-				requestCheck(curID);
-			}
-		});
+		prepareCheck();
 	}, 120000); //120,000 milliseconds = 120 seconds = 2 minutes.
 	
 	//Don't actually do anything when the forms are used, just run scripts.
@@ -878,7 +956,7 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
     <option value="bea">Beam.PRO</option>
 	<option value="utv">UStream</option><option value="lst">Livestream</option>
 </select><div id="dropdownIcon"></div><br />
-<input type="submit" value="Check Status" name="submit" id="submit" onclick="requestCheck();" />
+<input type="submit" value="Check Status" name="submit" id="submit" onclick="addStream();" />
 <input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
 <div id="favCheckDiv" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
 List of streams is saved in cookies.<br />

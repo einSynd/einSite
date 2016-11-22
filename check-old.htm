@@ -61,6 +61,7 @@ body { margin: 0; }
 .favicon { float: left; }
 #dropdownIcon { display: inline-block; height: 14px; }
 #favCheckDiv { width: 120px; }
+.nowrap { display: inline-block; white-space: nowrap; }
 </style>
 </head>
 <body bgcolor="#99999">
@@ -123,8 +124,8 @@ function processCookies(){
 	}
 	
 	if($.cookie("favicons")){
-		//If a cookie exists named "listMode", set the variable "listMode"
-		//	Forces the string to be converted into a boolean.
+		//If a cookie exists named "favicons", set the variable "favicons"
+		//	Toggles whether stream site is shown via favicon or in parentheses.
 		favicons = ($.cookie("favicons") == "true");
 		$.cookie("favicons", favicons, { expires: 30 });
 	}
@@ -180,7 +181,7 @@ function toggleFavicons() {
 
 function makePopup(stream) {
 	//Makes popup of the stream when it's middle-clicked
-    var width = 590;
+    var width = 640;
     var height = 360;
     var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 10;
     var top = (window.screenY != 'undefined' ? window.screenY : window.screenTop) + 200;
@@ -197,20 +198,30 @@ function checkStream(toCheck){
 	var stream = tempObj.stream;
 	var site = tempObj.site;
 	
-	//Doesn't actually work with JSONP, apparently. Dumb.
-	var statusCodeHandler = {
-				502: function(a, b, c) { console.log("502 detected."); requestError(a, b, c, toCheck); },
-				503: function(a, b, c) { console.log("503 detected."); requestError(a, b, c, toCheck); }
+	//Doesn't work with JSONP, but now that regular calls work, it's fine
+    var statusCodeHandler = {
+            //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
+				502: function(a, b, c) { console.log("502 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
+				503: function(a, b, c) { console.log("503 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
+                504: function(a, b, c) { console.log("504 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); }
 			};
 	
 	var errorHandler = function(a, b, c){ requestError(a, b, c, toCheck); };
 	
 	if(site == "ttv"){
+        var streamID = tempObj.streamID;
+        if( streamID == "undefined" || streamID == ""){
+//          console.log("Twitch stream without ID, requesting instead of checking");
+            getTwitchID(stream, toCheck);
+            return;
+        }
+        
 		return $.ajax({
-			url: 'https://api.twitch.tv/kraken/streams/'+stream,
-			dataType: 'jsonp',
-			jsonp: 'callback',
-			timeout: 7500,
+            type: 'GET',
+			url: 'https://api.twitch.tv/kraken/streams/'+streamID,
+			timeout: 10000,
+            headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+                       "Accept": "application/vnd.twitchtv.v5+json"},            
 			success: function(data) { handleTwitch(data, toCheck); },
 			error: errorHandler,
 			statusCode: statusCodeHandler
@@ -218,28 +229,28 @@ function checkStream(toCheck){
 	
 	//UStream API request
 	} else if(site == "utv"){
+        var streamID = tempObj.streamID;
 		return $.ajax({
-			url: 'http://api.ustream.tv/json/channel/' + stream + '/getInfo',
-			dataType: 'jsonp',
-			jsonp: 'callback',
-			timeout: 7500,
+            type: 'GET',
+			//url: 'http://einsynd.pw/ustreamAPI.php?stream=' + streamID,
+            url: "http://api.ustream.tv/channels/" + streamID + ".json",
+			timeout: 10000,
 			success: function(data) { handleUStream(data, toCheck); },
 			error: errorHandler,
 			statusCode: statusCodeHandler
 		});	
 
 	//Hitbox API request
-	//Had to mangle it myself. Hitbox only offers pure JSON.
 	} else if(site == "hbx"){
 		return $.ajax({
-			url: 'http://einsynd.pw/hitboxAPI.php?stream=' + stream + "&nocache=true",
-			dataType: 'jsonp',
-			jsonp: 'callback',
-			timeout: 7500,
+			type: 'GET',
+            url: 'http://www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
+			timeout: 10000,
 			success: function(data) { handleHitbox(data, toCheck); },
 			error: errorHandler,
 			statusCode: statusCodeHandler
 		});
+    //Livestream API request
 	} else if(site == "lst"){
 		return $.ajax({
 			url: 'http://x' + stream + 'x.api.channel.livestream.com/2.0/info.json',
@@ -249,6 +260,15 @@ function checkStream(toCheck){
 			error: errorHandler,
 			statusCode: statusCodeHandler
 		});
+    //Beam.PRO API request
+    } else if(site == "bea"){
+        return $.ajax({
+            url: 'https://beam.pro/api/v1/channels/' + stream,
+            timeout: 10000,
+            success: function(data) { handleBeam(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+        });
 	} else if(site == "jtv"){
 		$("#"+toCheck).html(getFavicon(site) + stream + ": Justin.TV has closed.").css({background: "red"});
 	} else {
@@ -268,19 +288,21 @@ function handleTwitch(data, toCheck) {
 	var tempObj = watchedStreams[toCheck];
 	var stream = tempObj.stream;
 	var site = tempObj.site;
+    var streamID = tempObj.streamID;
+    
 	var wasLive = tempObj.wasLive;
 	var lastStatus = "undefined";
+    
 	if(tempObj.lastStatus != null) {
 		lastStatus = tempObj.lastStatus;
 	}
+	var nowrap = "<div class='nowrap'>";
 	
 	if(typeof data.error !== "undefined"){
 		if( data.error == "Service Unavailable" ){
-			$(divID).html(getFavicon(site) + stream + ": Twitch returned error 503, Service Temporarily Unavailable");
-		} else if( data.error == "Unprocessable Entity" ) {
-			console.log("data.error: '"+ data.error + "' on #" + toCheck);
+			$(divID).html(nowrap + getFavicon(site) + stream + "</div>: Twitch returned error 503, Service Temporarily Unavailable");
 		} else if( data.error == "Not Found" ) {
-			$(divID).html(getFavicon(site) + stream + ": Channel not found, possibly deleted by owner.");
+			$(divID).html(nowrap + getFavicon(site) + stream + "</div>: Channel not found, possibly deleted by owner.");
 		} else {
 			console.log("Unhandled error: '"+ data.error + "' on #" + toCheck);
 		}
@@ -306,9 +328,13 @@ function handleTwitch(data, toCheck) {
 			//Save the current status in case next check screws up.
 			watchedStreams[toCheck].lastStatus = data.channel.status;
 			
-			link = "<a href='"+data.channel.url+"' target='_blank'>";
-			$(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewers + "v]: " + data.channel.status + ((data.game != null) ? " - " + data.game : "")).css({background: "green"});
-			$(divID).prop("title",data.channel.status + " -- " + data.viewers + " viewers.");
+			var link = "<a href='"+data.channel.url+"' target='_blank'>";
+            var game = (data.game != null) ? " - " + data.game : "";
+			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game).css({background: "green"});
+            
+            game = (data.game != null) ? " [" + data.game + "]" : "";
+			$(divID).prop("title",data.channel.status + game + " -- " + data.viewers + " viewers.");
+            
 			if( wasLive == false ){
 				watchedStreams[toCheck].wasLive = true;
 				sendAlert(stream, site, data.channel.status);
@@ -326,7 +352,6 @@ function handleTwitch(data, toCheck) {
 
 //Set div for handled Livestream streams
 function handleLivestream(data, toCheck) {
-	console.log(data);
 	var divID = "#" + toCheck;
 
 	var tempObj = watchedStreams[toCheck];
@@ -350,7 +375,6 @@ function handleLivestream(data, toCheck) {
 
 //Set div for handled UStream streams
 function handleUStream(data, toCheck) {
-	console.log(data);
 	var divID = "#" + toCheck;
 
 	var tempObj = watchedStreams[toCheck];
@@ -362,7 +386,7 @@ function handleUStream(data, toCheck) {
 	}
 	var wasLive = tempObj.wasLive;
 
-	if(data.status == "live"){
+	if(data.channel.status == "live"){
 		$(divID).html(getFavicon(site) + stream + " is live!" ).css({background: "green"});
 		if( wasLive == false ){
 			watchedStreams[toCheck].wasLive = true;
@@ -379,7 +403,7 @@ function handleUStream(data, toCheck) {
 //Set div for handled Hitbox stream.
 function handleHitbox(data, toCheck) {
 	var divID = "#" + toCheck;
-
+    data = JSON.parse(data);
 	var tempObj = watchedStreams[toCheck];
 	var stream = tempObj.stream;
 	var site = tempObj.site;
@@ -388,8 +412,12 @@ function handleHitbox(data, toCheck) {
 	// Initially had to handle offline separately since it returned a string instead of an array,
 	// but it looks like they've fixed that now. Check for "media_is_live".
 	if( data["livestream"] == null ) { 
-		if( data["media_type"] == "error" ){
-			$(divID).html(getFavicon(site) + stream + ": " + data["error_description"]);
+		if( data["error"] == true ){
+            if( data["error_msg"] == "no_media_found" ){
+                $(divID).html(getFavicon(site) + stream + " does not exist");
+            } else {
+                $(divID).html(getFavicon(site) + stream + ": " + data["error_msg"]);
+            }
 		}
 	} else if( data["media_type"] == "live" && data["livestream"][0]["media_is_live"] == "1"){
 		data = data["livestream"][0];
@@ -409,6 +437,26 @@ function handleHitbox(data, toCheck) {
 	}
 }
 
+function handleBeam(data, toCheck){
+//  console.log(data);
+    var divID = "#" + toCheck;
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	var wasLive = tempObj.wasLive;
+    
+    if( data.online == true) {
+        var link = "<a href='//beam.pro/" + stream + "' target='_blank'>";
+        var game = (data.type != null) ? " - " + data.type.name : "";
+        $(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewersCurrent + "v]: " + data.name + game).css({background: "green"});
+        
+        game = (data.type != null) ? " [" + data.type.name + "]" : "";
+        $(divID).prop("title",data.name + game + " -- " + data.viewersCurrent + " viewers.");
+    } else {
+        $(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+    }
+}
+
 //Handle errors that are thrown in a bit of a generic error.
 //	Only seen this used for timeouts, but console.log if it wasn't a timeout.
 //  Should also handle 502 Bad Gateways, but doesn't seem to.
@@ -425,13 +473,28 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
 	//Handles errors from the AJAX requests.
 	//	Apparently the only error JSONP can throw is Timeout, so. Bluh.
 	if (typeof textStatus === "string"){
+        
 		if (textStatus == "timeout"){
 			$(divID).html(getFavicon(site) + stream + " timed out.");
 			$(divID).css({background: "orange"});
-		}
+            
+		} else if (errorThrown == "Service Unavailable") {
+            $(divID).html(getFavicon(site) + stream + ": Unknown (Service Unavailable)");
+            $(divID).css({background: "orange"});
+        } else if (errorThrown == "Bad Request"){
+            if (site == "ttv") {
+                $(divID).html(getFavicon(site) + stream + ": Unknown (Bad Request - Twitch ignored Client ID)");
+            } else {
+                $(divID).html(getFavicon(site) + stream + ": Unknown (Bad Request)");
+            }
+            $(divID).css({background: "orange"});
+        } else if( errorThrown == "Unprocessable Entity" ) {
+            $(divID).html(getFavicon(site) + stream + "</div>: Channel has been closed for TOS violations");
+        } else {
+            console.log(textStatus + ": " + errorThrown);
+        }
 	} else {
-		//Just in case, if there was an error and it wasn't a timeout, set to offline and log it.
-		//Not gonna happen with JSONP, though.
+		//If somehow an error was thrown that wasn't a string?
 		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
 		$(divID).prop("title","");
 		console.log("Request Error: "+textStatus);
@@ -481,8 +544,6 @@ function requestCheck(streamNum){
 		if( exists ) {
 			alert("This stream is already being checked for.");
 			console.log("Already checked: '" + stream + "' on " + site);
-		} else if( site == "jtv" ){
-			alert("Cannot add JTV stream, JTV has closed. Option is for removal of streams only.");
 		} else {
 			//Length returns total number, divs start at zero, so length should be one above what we have.
 			var newDivID = $(".info").length;
@@ -505,6 +566,16 @@ function requestCheck(streamNum){
 		
 		//Set "streamNum" to the name of the div's ID so it matches a normal call.
 		streamNum = newDivID.slice(1);
+        
+            //Check for UStream, get ID instead of checking instead.
+            if(site == "utv"){
+                getUstreamID(stream, streamNum);
+                return;
+            }
+            if(site == "ttv"){
+                getTwitchID(stream, streamNum);
+                return;
+            }
 	}
 	
 	//Check if it's old Livestream format and convert to new.
@@ -518,7 +589,84 @@ function requestCheck(streamNum){
 	checkStream(streamNum);
 }
 
-//Removes stream div from the page.
+//Twitch API requires ID as of v5. Luckily they eventually added an API to find it.
+function getTwitchID(stream, streamNum){
+    var tempObj = watchedStreams[streamNum];
+    
+    $.ajax({
+        url: 'https://api.twitch.tv/kraken/users?login=' + stream.toLowerCase(),
+        headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
+                  "Accept": "application/vnd.twitchtv.v5+json"}, 
+        type: "get",
+        timeout: 10000,
+        success: function(data){
+//          console.log("Twitch ID Successfully requested");
+            //Good news, it returns properly if there were no results.
+            if( data["_total"] === 0 ){
+                console.log("Twitch ID success, doesn't exist. stream: " + stream + ", div number " + streamNum);
+                alert("Twitch stream " + stream + " does not exist");
+                removeStreamNum(streamNum);
+            } else {
+                data = data["users"][0]["_id"];
+                tempObj.streamID = data;
+                watchedStreams[streamNum] = tempObj;
+                checkStream(streamNum);
+                //Save the cookie on ID retrieval, so that things update to the new
+                //format properly. Prevents issues.
+                $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+            }
+        },
+        error: function(){
+            //Since there's a legit way to tell if there's no stream with that name,
+            //an error doesn't necessarily mean the stream doesn't exist.
+            console.log("Twitch ID error, stream: " + stream + ", div number " + streamNum);
+            alert("Error retrieving Twitch ID, will try again soon");
+        },
+    })
+}
+
+//UStream removed easy access to ID, so now I have to fetch it.
+function getUstreamID(stream, streamNum){
+    var tempObj = watchedStreams[streamNum];
+
+    $.ajax({
+        url: 'http://einsynd.pw/ustreamID.php?stream=' + stream,
+        dataType: "jsonp",
+        jsonp: "callback",
+        success: function(data){
+            data = data["id"];
+            console.log("Success, ID: " + data);
+            tempObj.streamID = data;
+            watchedStreams[streamNum] = tempObj;
+            checkStream(streamNum);
+        },
+        error: function(){
+            console.log("UStream ID error, stream: "+ stream + ", div number " + streamNum);
+            alert("Stream does not exist");
+            removeStreamNum(streamNum);
+        },
+        type: "get",
+        timeout: 10000
+    });
+}
+
+//Removes stream div from the page automatically via div number
+function removeStreamNum(streamNum){
+    //Removes the div from the page
+    $("#"+streamNum).remove();
+    //Removes the entry in the stream array
+    watchedStreams.splice(streamNum, 1);
+    
+    //Renumbers the divs so there aren't any holes
+    $.each($(".info"), function(num) {
+        $(this).prop("id", num);
+    });
+    
+    //Set the cookie so it stays gone.
+    $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+}
+
+//Removes stream div from the page via page's form
 function removeStream(){
 	var stream = $('#checkStream').val();
 	var site = $('#site').val();
@@ -641,7 +789,7 @@ function middleClick(divID, button) {
 	
 	if( streamID > 0 ){
 		makePopup(stream + ":" + streamID + "," + site);
-	} else {
+    } else {
 		makePopup(stream + "," + site);
 	}
 }
@@ -727,8 +875,8 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="text" name="checkStream" value="" id="checkStream" />
 <select name="site" id="site">
 	<option value="ttv" selected>Twitch.TV</option><option value="hbx">Hitbox</option>
-	<option value="lst">Livestream</option><option value="utv">UStream</option>
-	<option value="jtv">Justin.TV</option>
+    <option value="bea">Beam.PRO</option>
+	<option value="utv">UStream</option><option value="lst">Livestream</option>
 </select><div id="dropdownIcon"></div><br />
 <input type="submit" value="Check Status" name="submit" id="submit" onclick="requestCheck();" />
 <input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
@@ -736,7 +884,8 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 List of streams is saved in cookies.<br />
 Middle click the colored box to open a popup for the stream.<br />
 If the description is too long, mouseover the box for a tooltip.<br />
-<br />
+<br /><!--
+    * Disabled PushBullet due to new 100-push automated limit, plus vague reports of not working.
 (Optional) Enter a <a href="https://www.pushbullet.com/">PushBullet</a> access token to get alerts when streams go live.<br />
 Device ID is optional. Leaving it blank will send to all devices.<br />
 &nbsp; Token: &nbsp; &nbsp; <input type="text" name="accessToken" value="" id="accessToken" /> (Found <a href="https://www.pushbullet.com/account">here</a> if logged in)<br />
@@ -746,6 +895,7 @@ Device ID: <input type="text" name="deviceID" value="" id="deviceID" />
 <input type="button" value="Test PushBullet" id="testPushB" onclick="sendAlert('Test Notification', 'einSynd.pw', 'This is a test notification sent from einSynd.pw');" /><br />
 <div id="savePBdiv"><input type="checkbox" value="y" name="savePB" id="savePB" checked />Save Info To Cookie When Enabling</div>
 <div id="delPBdiv"><input type="checkbox" value="y" name="delPB" id="delPB" checked />Delete Cookie When Disabling</div><br />
+-->
 </form>
 </body>
 </html>
