@@ -124,8 +124,8 @@ function processCookies(){
 	}
 	
 	if($.cookie("favicons")){
-		//If a cookie exists named "listMode", set the variable "listMode"
-		//	Forces the string to be converted into a boolean.
+		//If a cookie exists named "favicons", set the variable "favicons"
+		//	Toggles whether stream site is shown via favicon or in parentheses.
 		favicons = ($.cookie("favicons") == "true");
 		$.cookie("favicons", favicons, { expires: 30 });
 	}
@@ -611,12 +611,16 @@ function getTwitchID(stream, streamNum){
                 tempObj.streamID = data;
                 watchedStreams[streamNum] = tempObj;
                 checkStream(streamNum);
+                //Save the cookie on ID retrieval, so that things update to the new
+                //format properly. Prevents issues.
+                $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
             }
         },
         error: function(){
+            //Since there's a legit way to tell if there's no stream with that name,
+            //an error doesn't necessarily mean the stream doesn't exist.
             console.log("Twitch ID error, stream: " + stream + ", div number " + streamNum);
-            alert("Twitch stream does not exist?");
-            removeStreamNum(streamNum);
+            alert("Error retrieving Twitch ID, will try again soon");
         },
     })
 }
@@ -881,6 +885,7 @@ List of streams is saved in cookies.<br />
 Middle click the colored box to open a popup for the stream.<br />
 If the description is too long, mouseover the box for a tooltip.<br />
 <br /><!--
+    * Disabled PushBullet due to new 100-push automated limit, plus vague reports of not working.
 (Optional) Enter a <a href="https://www.pushbullet.com/">PushBullet</a> access token to get alerts when streams go live.<br />
 Device ID is optional. Leaving it blank will send to all devices.<br />
 &nbsp; Token: &nbsp; &nbsp; <input type="text" name="accessToken" value="" id="accessToken" /> (Found <a href="https://www.pushbullet.com/account">here</a> if logged in)<br />
