@@ -70,6 +70,7 @@ var watchedStreams = [ ];
 var listMode = false;
 var host = "http://" + window.location.host;
 var favicons = true;
+var jqXHRGlobal = "";
 
 //Creates an object out of stream, site, and ID
 function streamObj(stream, site, streamID) {
@@ -486,8 +487,12 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
             $(divID).css({background: "orange"});
         } else if( errorThrown == "Unprocessable Entity" ) {
             $(divID).html(getFavicon(site) + stream + "</div>: Channel has been closed for TOS violations");
+        } else if( errorThrown == ""){
+            //Some sort of error, probably cross-domain but no way of knowing
+            $(divID).html(getFavicon(site) + stream + "</div>: Error Requesting Info");
         } else {
             console.log(textStatus + ": " + errorThrown);
+            
         }
 	} else {
 		//If somehow an error was thrown that wasn't a string?
@@ -601,7 +606,7 @@ function addStream() {
         //Length returns total number, divs start at zero, so length should be one above what we have.
         var newDivID = $(".info").length;
         
-        $("#streamArea").append("<div id='" + newDivID + "' class='info'>Getting " + stream + "'s Info ...</div>");			
+        $("#streamArea").append("<div id='" + newDivID + "' class='info'>Getting " + getFavicon(site) + stream + "'s Info ...</div>");			
         newDivID = "#" + newDivID;
         
         //If there are things with class "list" then add "list" class, otherwise default to "box" class
@@ -644,7 +649,7 @@ function prepareCheck(){
         //For each type of div with class "info", request a check.
         if (typeof watchedStreams[curID] !== "undefined"){
             //Change the words to let you know it's checking, then actually check.
-            $(this).html("Getting " + watchedStreams[curID].stream + "'s Info ...");
+            $(this).html("Getting " + getFavicon(watchedStreams[curID].site) + watchedStreams[curID].stream + "'s Info ...");
             
             if( watchedStreams[curID].site == "ttv") {
                 //Twitch stream, add to temp array and set all status to offline,
