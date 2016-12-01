@@ -663,12 +663,22 @@ function prepareCheck(){
                 };
 
                 twitchIDs.push(watchedStreams[curID].streamID);
+                //Max Twitch multi-request is 100, so if we somehow have that many,
+                //go ahead and check and empty the variables.
+                if( twitchIDs.length > 99 ){
+                    twitchIDList = twitchIDs.join(",");
+                    twitchCheck(twitchIDList, twitchStreams);
+                    
+                    twitchIDs = [ ];
+                    twitchStreams = { };
+                }
             } else {
                 requestCheck(curID);
             }
         }
     });
-    twitchIDList = twitchIDs.join(",")
+    
+    twitchIDList = twitchIDs.join(",");
     twitchCheck(twitchIDList, twitchStreams);
 }
 
