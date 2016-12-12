@@ -455,8 +455,6 @@ function handleBeam(data, toCheck){
 }
 
 //Handle errors that are thrown in a bit of a generic error.
-//	Only seen this used for timeouts, but console.log if it wasn't a timeout.
-//  Should also handle 502 Bad Gateways, but doesn't seem to.
 function requestError(jqXHR, textStatus, errorThrown, toCheck){
 	var divID = "#" + toCheck;
 
@@ -502,17 +500,24 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
 	}
 }
 
+//Quick function to foreach an error for all Twitch streams since they'll all be the same error
+function handleMassError(jqXHR, textStatus, errorThrown, twitchStreams){
+    $.each(twitchStreams, function(index,stream){
+        requestError(jqXHR, textStatus, errorThrown, stream.divID);
+    });    
+}
+
 //Sends a single API hit for all checked Twitch streams' statuses.
 function twitchCheck(twitchIDList, twitchStreams){
-
     var statusCodeHandler = {
     //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
-        502: function(a, b, c) { console.log("502 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
-        503: function(a, b, c) { console.log("503 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); },
-        504: function(a, b, c) { console.log("504 on " + stream + " (" + site + ")"); requestError(a, b, c, toCheck); }
+        500: function(a, b, c) { console.log("502 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
+        502: function(a, b, c) { console.log("502 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
+        503: function(a, b, c) { console.log("503 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
+        504: function(a, b, c) { console.log("504 on mass Twitch"); handleMassError(a, b, c, twitchStreams); }
     };
 	
-	var errorHandler = function(a, b, c){ requestError(a, b, c, toCheck); };
+	var errorHandler = function(a, b, c){ handleMassError(a, b, c, twitchStreams); };
 
     return $.ajax({
         type: 'GET',
