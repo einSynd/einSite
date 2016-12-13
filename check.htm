@@ -546,7 +546,7 @@ function handleMassTwitch(data, twitchStreams){
         thisStream.status = nowrap + favicon + link + thisStream.name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
         
         //Change the "game" to fit better for a tooltip
-        game = (data.game != null) ? " [" + data.game + "]" : "";
+        game = (response.game != null) ? " [" + response.game + "]" : "";
         thisStream.tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
     });
     
