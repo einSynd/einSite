@@ -97,7 +97,7 @@ function fileCheck(date, first){
 	}
 	
     $("#currentLog").html(date);
-	file = "http://einsynd.pw/vgzlogs/%23vidyagamez."+date+".log";
+	file = "http://" + window.location.host + "/vgzlogs/%23vidyagamez."+date+".log";
 	$.get(file)
     .done(function(data) { 
 		//Parse the raw log into something vaguely HTML compatible
