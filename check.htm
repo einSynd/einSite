@@ -533,6 +533,7 @@ function twitchCheck(twitchIDList, twitchStreams){
 
 //Handles the return from the API request
 function handleMassTwitch(data, twitchStreams){
+    
     var nowrap = "<div class='nowrap'>";
     var favicon = getFavicon("ttv");
     data = data.streams;
@@ -540,7 +541,14 @@ function handleMassTwitch(data, twitchStreams){
     //Foreach through the returned live streams
     $.each(data, function(index,response){
         var twitchID = response.channel._id;
+        var twitchName = response.channel.display_name;
         var thisStream = twitchStreams[twitchID];
+        
+        //API reports a different stream name belonging to a checked stream ID, so update.
+        if(twitchName !== thisStream.name){
+            thisStream.name = twitchName;
+        }
+
         var link = "<a href='"+response.channel.url+"' target='_blank'>";
         var game = (response.game != null) ? " - " + response.game : "";
         thisStream.status = nowrap + favicon + link + thisStream.name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
@@ -560,6 +568,14 @@ function handleMassTwitch(data, twitchStreams){
         } else {
             $(divID).html(twitch.status).css({background: "green"});
             $(divID).prop("title",twitch.tooltip);
+        }
+        
+        //If streamer changed name, ID will be the same but channel won't. Update from live check.
+        if(watchedStreams[twitch.divID].stream.toLowerCase() != twitch.name.toLowerCase()){
+            watchedStreams[twitch.divID].stream = twitch.name;
+            $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+            
+            console.log("Stream name changed, upating: " + twitch.name);
         }
     });
 }
