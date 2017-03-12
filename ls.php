@@ -334,9 +334,9 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
         } else if(makeSite=="uh5") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://www.ustream.tv/channel/"+streamName.toLowerCase()+"/pop-out></iframe>");
         } else if(makeSite=="cas") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://connectcast.tv/popout/live/"+streamName+"></iframe>");
+            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://connectcast.tv/popout/live/"+streamToMake+"></iframe>");
         } else if(makeSite=="bea") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src='https://beam.pro/embed/player/"+streamName+"'></iframe>");
+            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src='https://beam.pro/embed/player/"+streamToMake+"'></iframe>");
         } else if(makeSite=="rec") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.twitch.tv/?video="+streamToMake+"></iframe>");
         }
@@ -473,7 +473,6 @@ function changeStream(newStream, newSite, newId, which){
 			document.title = otherStream + " viewing page";
 		}
 	} else {
-        console.log(newStream);
 		//Looks like we're adding or changing a stream.
 		if(otherStream != "none") {
 			//There's already another stream, time to make it a dual stream.
