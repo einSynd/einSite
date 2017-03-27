@@ -202,7 +202,7 @@ if(isset($_GET["stream"]) && $_GET["stream"] != ""){
 } else {
 
 	echo "<font color=#FFF><h1>No stream given.</h1>";
-	echo "Enter a Twitch.TV stream name to fetch its 100 latest recordings.<br />Justin.TV has closed and therefore cannot be used.</font>";
+	echo "Enter a Twitch.TV stream name to fetch its 100 latest recordings.</font><br />";
 	echo "<form id='getStream'>";
 	echo "<input type=\"text\" name=\"stream\" id=\"stream\" />";
 	echo "<input type=\"submit\" value=\"Get Recordings\" name=\"submit\" id=\"submit\" />";
