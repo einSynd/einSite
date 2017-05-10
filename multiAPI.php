@@ -1,7 +1,7 @@
 <?php
 /*Page to do multiple API requests at once based on site.
  *Inputs:
- *	Site: TTV, LST, UST, HBX
+ *	Site: TTV, LST, UST, SMA
  *	Type: Status (more TBA, default if excluded)
  *	Streams: Comma-separated list of streams to check
  *
@@ -24,13 +24,13 @@ function curlRequest($url){
 	return $output;
 }
 
-$validSites = array("ttv","lst","utv","hbx");
+$validSites = array("ttv","lst","utv","sma");
 $validTypes = array("status");
 
 $twitchAPI = 'https://api.twitch.tv/kraken/streams/';
 $livestreamAPI = '.api.channel.livestream.com/2.0/';
 $ustreamAPI = 'http://api.ustream.tv/json/channel/';
-$hitboxAPI = 'http://api.hitbox.tv/media/live/';
+$smashcastAPI = 'http://api.smashcast.tv/media/live/';
 
 //This speeds up file_get_contents immensely.
 $context = stream_context_create(array('http' => array('header'=>'Connection: close\r\n')));
@@ -90,9 +90,9 @@ foreach($streams as $index => $val){
 				}
 			}
 		}
-	} elseif( $site == "hbx" ){
+	} elseif( $site == "sma" ){
 		if( $type == "status" ){
-			$response = json_decode(@curlRequest($hitboxAPI . $val . "?nocache=true"), true);
+			$response = json_decode(@curlRequest($smashcastAPI . $val . "?nocache=true"), true);
 			if( !$response ){
 				$tempArray['live'] = 'error';
 				$tempArray['error'] = error_get_last();

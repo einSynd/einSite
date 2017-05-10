@@ -8,7 +8,9 @@
 <script type="text/javascript">
 var global = "";
 function doCall(){
-    var api = $("#apipath").val();
+    var api = $("#apiPath").val();
+    var apiType = $("#apiType").val();
+    apiType = "kraken";
     var errorHandler = function(a, b, c){ requestError(a, b, c); };
     
     var version = $("#version option:selected").val();
@@ -16,7 +18,7 @@ function doCall(){
     
     return $.ajax({
         type: 'GET',
-        url: 'https://api.twitch.tv/kraken/' + api,
+        url: 'https://api.twitch.tv/' + apiType + '/' + api,
         timeout: 10000,
         headers: {"Client-ID": "glrjuvya5xmg8batkujqtfij53q073h",
                   "Accept": version},
@@ -37,7 +39,12 @@ function requestError(a,b,c){
 
     Enter an Twitch.TV API path to see its result
     <form id='getStream'>
-        https://api.twitch.tv/kraken/<input type="text" name="apipath" id="apipath" />
+        https://api.twitch.tv/kraken/
+<!--        <select name="apiType" id="apiType">
+            <option value="kraken">kraken</option>
+            <option value="api">api</option>
+        </select> -->
+        <input type="text" name="apiPath" id="apiPath" />
         <select name="version" id="version">
             <option value="v3">v3</option>
             <option value="v5">v5</option>

@@ -185,7 +185,7 @@ function setBlockingDiv(streamDiv) {
 }
 
 function getViewers(stream) {
-	//HBX viewer request removed, they added their own.
+	//SMA viewer request removed, they added their own.
 	//	Leaving this in case another site needs to be added later.
 	return getViewersTTV(stream);
 }
@@ -241,8 +241,8 @@ function makeChat(stream,streamSite) {
 	windowFeatures = "width=" + width + ",height=" + height + windowFeatures;
 	if(streamSite=="ttv" || streamSite=="th5") {
 		window.open("http://www.twitch.tv/"+stream+"/chat?popout=&secret=safe", stream + " chat window", windowFeatures);
-	} else if(streamSite=="hbx") {
-		window.open("http://www.hitbox.tv/embedchat/"+stream+"?autoconnect=true", stream + " chat window", windowFeatures);
+	} else if(streamSite=="sma") {
+		window.open("http://www.smashcast.tv/embedchat/"+stream+"?autoconnect=true", stream + " chat window", windowFeatures);
     } else if(streamSite=="bea") {
     	window.open("https://beam.pro/embed/chat/"+stream, stream + " chat window", windowFeatures);
 	} else {
@@ -308,7 +308,7 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 	else if(makeSite=="htv") { embedSWF = htv + htv2 + streamToMake; params["movie"] = htv; flashVars = HTVFlashVars; }
 	
 	//This grew from Veemi, it has to be in an iframe or it won't work, which breaks everything else.
-	//Luckily, this has made it easy to embed other sites that use iframes. Currently, Hitbox and Youtube.
+	//Luckily, this has made it easy to embed other sites that use iframes. Currently, smashcast and Youtube.
 	else {
 		//Make sure the stream is gone, then prepare a fresh div
 		if($("#stream"+whatDiv).is("object")) {
@@ -323,8 +323,8 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 		//Add the appropriate IFrame to the div
 		if(makeSite=="vee") {
 			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency=true src=http://www.veemi.com/embed.php?v="+streamToMake+"&vw=100%&vh=100%&domain=einsynd.pw></iframe>");
-		} else if(makeSite=="hbx") {
-			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen src=//www.hitbox.tv/#!/embed/"+streamToMake+"?autoplay=true></iframe>");
+		} else if(makeSite=="sma") {
+			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen src=//www.smashcast.tv/#!/embed/"+streamToMake+"?autoplay=true></iframe>");
 		} else if(makeSite=="you") {
 			$("#stream"+whatDiv).append("<iframe id='youframe' width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen autoplay src=//www.youtube.com/embed/"+streamToMake+"?autoplay=1></iframe>");
 		} else if(makeSite=="ypl") {
@@ -351,8 +351,8 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 	}
 	$("#change"+whatDiv).text("[Change Stream]");
 	
-	// Add chat link, for Twitch, UStream, Hitbox, and Beam.
-	if (makeSite == "ttv" || makeSite == "utv" || makeSite == "hbx" || makeSite == "bea") {
+	// Add chat link, for Twitch, UStream, Smashcast, and Beam.
+	if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "bea") {
 		$("#achat"+whatDiv).off();
 		$("#achat"+whatDiv).click({stream: streamToMake, site: makeSite}, function(e) {
 			stream = e.data.stream;
@@ -366,7 +366,7 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 	}
 	
 	if(whatDiv == "1") {
-		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "hbx" || makeSite == "bea") {
+		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "bea") {
 			$("#leftDiv").css("width", "115px");
 		} else {
 			$("#leftDiv").css("width", "90px");
@@ -375,7 +375,7 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 		stream1 = streamToMake;
 		
 	} else if(whatDiv == "2") {
-		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "hbx" || makeSite == "bea") {
+		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "bea") {
 			$("#rightDiv").css("width", "115px");
 		} else {
 			$("#rightDiv").css("width", "90px");
@@ -460,7 +460,7 @@ function changeStream(newStream, newSite, newId, which){
 			$("#stream"+other).height("100%");
 			$("#stream"+other).width("100%");
 			//If the other is on a site that supports chat, allow the middle [CHAT] button
-			var chatSites = [ "ttv", "utv", "hbx", "bea" ];
+			var chatSites = [ "ttv", "utv", "sma", "bea" ];
 			if ( $.inArray(otherSite, chatSites) > -1 ){
 				$("#centerDiv").width("95px");
 				$("#achatMid"+other).show();
@@ -494,7 +494,7 @@ function changeStream(newStream, newSite, newId, which){
 			$("#stream"+which).height("100%");
 			$("#stream"+which).width("100%");
 			//Add the middle chat button if it's a site that supports chat
-			if (newSite=="ttv" || newSite=="utv" || newSite=="hbx" || newSite == "bea"){
+			if (newSite=="ttv" || newSite=="utv" || newSite=="sma" || newSite == "bea"){
 				$("#centerDiv").width("95px");
 				$("#achatMid"+which).show();
 			} else {
@@ -543,7 +543,7 @@ $(document).ready(function(){
 			'<form id="change"><input type="hidden" id="which" />' +
 			'<input type="text" id="changeTo" /><select id="siteTo">' +
 			'<option value="ttv">Twitch.TV</option><option value="lst">Livestream</option>' +
-			'<option value="utv">UStream</option><option value="hbx">Hitbox.TV</option>' +
+			'<option value="utv">UStream</option><option value="sma">Smashcast.TV</option>' +
 			'<option value="vee">Veemi</option><option value="you">Youtube</option></select>' +
 			'<div align="center"><input type="submit" value="Submit"/></div>' +
 			'</form>')
