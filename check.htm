@@ -143,12 +143,18 @@ function processCookies(){
 	$.each(watchedStreams, function(num, val) {
 		//Converts each entry into an object
 		var newObject = streamFromString(val);
+        
+        //Hitbox changed to Smashcast, everything else should be same, so just change site
+        if (newObject.site == "hbx"){
+            newObject.site = "sma";
+        }
+            
 		watchedStreams[num] = newObject;
 		
 		var stream = newObject.stream;
 		var site = newObject.site;
 		var streamID = newObject.streamID;
-		
+        
 		//Adds div to stream area
 		$("#streamArea").append("<div id=" + num + " class='info'>Getting " + stream + "'s Info ...</div>");
 		var newDivID = "#" + num;
@@ -241,13 +247,13 @@ function checkStream(toCheck){
 			statusCode: statusCodeHandler
 		});	
 
-	//Hitbox API request
-	} else if(site == "hbx"){
+	//Smashcast API request
+	} else if(site == "sma"){
 		return $.ajax({
 			type: 'GET',
             url: 'http://www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
 			timeout: 10000,
-			success: function(data) { handleHitbox(data, toCheck); },
+			success: function(data) { handleSmashcast(data, toCheck); },
 			error: errorHandler,
 			statusCode: statusCodeHandler
 		});
@@ -396,8 +402,8 @@ function handleUStream(data, toCheck) {
 	}
 }
 
-//Set div for handled Hitbox stream.
-function handleHitbox(data, toCheck) {
+//Set div for handled Smashcast stream.
+function handleSmashcast(data, toCheck) {
 	var divID = "#" + toCheck;
     data = JSON.parse(data);
 	var tempObj = watchedStreams[toCheck];
@@ -462,7 +468,7 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
 	var stream = tempObj.stream;
 	var site = tempObj.site;
 	
-//	console.log( ((textStatus !== undefined) ? textStatus : "_") + "|" + ((errorThrown !== undefined) ? errorThrown : "_") );
+	console.log( stream + ": " + ((textStatus !== undefined) ? textStatus : "_") + "|" + ((errorThrown !== undefined) ? errorThrown : "_") );
 //	console.log(jqXHR);
 	
 	//Handles errors from the AJAX requests.
@@ -511,7 +517,7 @@ function handleMassError(jqXHR, textStatus, errorThrown, twitchStreams){
 function twitchCheck(twitchIDList, twitchStreams){
     var statusCodeHandler = {
     //  400: function(a, b, c) { console.log("400 detected."); requestError(a, b, c, toCheck); },
-        500: function(a, b, c) { console.log("502 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
+        500: function(a, b, c) { console.log("500 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
         502: function(a, b, c) { console.log("502 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
         503: function(a, b, c) { console.log("503 on mass Twitch"); handleMassError(a, b, c, twitchStreams); },
         504: function(a, b, c) { console.log("504 on mass Twitch"); handleMassError(a, b, c, twitchStreams); }
@@ -994,7 +1000,7 @@ $(document).ready(function(){
 Enter a stream name and select a site to check its status:<br />(or to remove from the list above)<br />
 <input type="text" name="checkStream" value="" id="checkStream" />
 <select name="site" id="site">
-	<option value="ttv" selected>Twitch.TV</option><option value="hbx">Hitbox</option>
+	<option value="ttv" selected>Twitch.TV</option><option value="SMA">Smashcast</option>
     <option value="bea">Beam.PRO</option>
 	<option value="utv">UStream</option><option value="lst">Livestream</option>
 </select><div id="dropdownIcon"></div><br />

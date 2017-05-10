@@ -116,8 +116,8 @@ function makePopup(recID) {
 	if( site == "ttv" ) {
 		//page = 'http://www.twitch.tv/' + theStream + '/popout?videoId=' + recID;
         page = "/ls.php?s=" + theStream + ":" + recID + ",rec";
-	} else if( site == "hbx" ) {
-		page = 'http://hitbox.tv/';
+	} else if( site == "sma" ) {
+		page = 'http://smashcast.tv/';
 		//Not implemented yet.
 	} else {
 		alert("Site not supported: " + site);

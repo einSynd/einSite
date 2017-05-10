@@ -27,8 +27,8 @@ import argparse
 import subprocess
 import shutil
  
-BASE_URL = 'http://www.hitbox.tv'
-PROG_INFO = "Hitbox Recording Downloader v1.2"
+BASE_URL = 'http://www.smashcast.tv'
+PROG_INFO = "smashcast Recording Downloader v1.2"
  
 def download_file(url, local_filename):
     fileInfo = "Downloading {0}...".format(local_filename)
@@ -48,7 +48,7 @@ def download_file(url, local_filename):
  
 def download_broadcast(id_, delete):
     if not id_.isdigit():
-        print("Invalid recording ID, Hitbox only uses numbers.")
+        print("Invalid recording ID, smashcast only uses numbers.")
         quit()
     print(sys.version)
     """ download all video parts for broadcast 'id_' """
@@ -118,8 +118,8 @@ def download_broadcast(id_, delete):
     
 if __name__=="__main__":
     print(PROG_INFO)
-    parser = argparse.ArgumentParser(description="Downloads Hitbox recording TS files")
-    parser.add_argument('videoID', help='Hitbox video ID')
+    parser = argparse.ArgumentParser(description="Downloads smashcast recording TS files")
+    parser.add_argument('videoID', help='smashcast video ID')
     parser.add_argument('-d', '--delete', action='store_true', help="Delete the individual TS files and _files folder when done")
     args = parser.parse_args()
     download_broadcast(args.videoID, args.delete)

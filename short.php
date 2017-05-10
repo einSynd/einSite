@@ -12,8 +12,10 @@
 		$req = $req . "WHERE site='LS' AND short='" . $stream . "';";
 	} else if (substr($stream, 0, 1) == "U") {
 		$req = $req . "WHERE site='UTV' AND short='" . $stream . "';";
-	} else if (substr($stream, 0, 1) == "H") {
-		$req = $req . "WHERE site='HBX' AND short='" . $stream . "';";
+    } else if (substr($stream, 0, 1) == "H") {
+        $req = $req . "WHERE site='HBX' AND short='" . $stream . "';";
+    } else if (substr($stream, 0, 1) == "S") {
+		$req = $req . "WHERE site='SMA' AND short='" . $stream . "';";
     } else if (substr($stream, 0, 1) == "B") {
         $req = $req . "WHERE site='BEA' AND short='" . $stream . "';";
 	} else {
@@ -34,6 +36,9 @@
 		echo "No stream found using ID ". $stream;
 	} else {
 		$found = mysqli_fetch_array($result);
+        if( $found["site"] == "HBX" ){
+            $found["site"] = "SMA";
+        }
 		echo "Found stream: " . $stream . " => " . $found["name"] . " on " . $found["site"] . "<br />";
 		echo "Redirecting to: http://einsynd.pw/p?s=" . $found["name"] . "," . $found["site"] . "<br />";
 		echo "Should take less than a second. If not, try clicking the link above.";

@@ -41,7 +41,7 @@
 		if($data === false){
 			$error = curl_error($fileReq);
 			if( strpos($error, "Host not found") ){
-				$data = '{"media_type": "error","error_description": "Failed to connect to Hitbox.tv"}';
+				$data = '{"media_type": "error","error_description": "Failed to connect to Smashcast.tv"}';
 			} else {
 				$data = '{"media_type": "error","error_description": "' . $error . '"}';
 			}
