@@ -547,7 +547,7 @@ function handleMassTwitch(data, twitchStreams){
     //Foreach through the returned live streams
     $.each(data, function(index,response){
         var twitchID = response.channel._id;
-        var twitchName = response.channel.display_name;
+        var twitchName = response.channel.name;
         var thisStream = twitchStreams[twitchID];
         
         //API reports a different stream name belonging to a checked stream ID, so update.
