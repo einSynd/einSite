@@ -146,7 +146,7 @@ function loadRecordings($streamName){
 	$recordings = $recordings["videos"];
 	$extraRec = @file_get_contents('https://api.twitch.tv/kraken/channels/' . $streamName . '/videos?limit=100', false, $context);
 	$extraRec = json_decode($extraRec, true);
-    echo $spareThing;
+    //echo $spareThing;
 	$recordings = array_merge($recordings, $extraRec["videos"]);
 	$count = 0;
 	$newList = array();
