@@ -243,8 +243,8 @@ function makeChat(stream,streamSite) {
 		window.open("http://www.twitch.tv/"+stream+"/chat?popout=&secret=safe", stream + " chat window", windowFeatures);
 	} else if(streamSite=="sma") {
 		window.open("http://www.smashcast.tv/embedchat/"+stream+"?autoconnect=true", stream + " chat window", windowFeatures);
-    } else if(streamSite=="bea") {
-    	window.open("https://beam.pro/embed/chat/"+stream, stream + " chat window", windowFeatures);
+    } else if(streamSite=="mxr") {
+    	window.open("https://mixer.com/embed/chat/"+stream, stream + " chat window", windowFeatures);
 	} else {
 		window.open(host + "/chat.php?s="+stream+"&ss="+streamSite, stream + " chat window", windowFeatures);
 	}
@@ -335,8 +335,8 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://www.ustream.tv/channel/"+streamName.toLowerCase()+"/pop-out></iframe>");
         } else if(makeSite=="cas") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://connectcast.tv/popout/live/"+streamToMake+"></iframe>");
-        } else if(makeSite=="bea") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src='https://beam.pro/embed/player/"+streamToMake+"'></iframe>");
+        } else if(makeSite=="mxr") {
+            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src='https://mixer.com/embed/player/"+streamToMake+"'></iframe>");
         } else if(makeSite=="rec") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.twitch.tv/?video="+streamToMake+"></iframe>");
         }
@@ -351,8 +351,8 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 	}
 	$("#change"+whatDiv).text("[Change Stream]");
 	
-	// Add chat link, for Twitch, UStream, Smashcast, and Beam.
-	if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "bea") {
+	// Add chat link, for Twitch, UStream, Smashcast, and Mixer.
+	if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "mxr") {
 		$("#achat"+whatDiv).off();
 		$("#achat"+whatDiv).click({stream: streamToMake, site: makeSite}, function(e) {
 			stream = e.data.stream;
@@ -366,7 +366,7 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 	}
 	
 	if(whatDiv == "1") {
-		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "bea") {
+		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "mxr") {
 			$("#leftDiv").css("width", "115px");
 		} else {
 			$("#leftDiv").css("width", "90px");
@@ -375,7 +375,7 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 		stream1 = streamToMake;
 		
 	} else if(whatDiv == "2") {
-		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "bea") {
+		if (makeSite == "ttv" || makeSite == "utv" || makeSite == "sma" || makeSite == "mxr") {
 			$("#rightDiv").css("width", "115px");
 		} else {
 			$("#rightDiv").css("width", "90px");
@@ -460,7 +460,7 @@ function changeStream(newStream, newSite, newId, which){
 			$("#stream"+other).height("100%");
 			$("#stream"+other).width("100%");
 			//If the other is on a site that supports chat, allow the middle [CHAT] button
-			var chatSites = [ "ttv", "utv", "sma", "bea" ];
+			var chatSites = [ "ttv", "utv", "sma", "mxr" ];
 			if ( $.inArray(otherSite, chatSites) > -1 ){
 				$("#centerDiv").width("95px");
 				$("#achatMid"+other).show();
@@ -494,7 +494,7 @@ function changeStream(newStream, newSite, newId, which){
 			$("#stream"+which).height("100%");
 			$("#stream"+which).width("100%");
 			//Add the middle chat button if it's a site that supports chat
-			if (newSite=="ttv" || newSite=="utv" || newSite=="sma" || newSite == "bea"){
+			if (newSite=="ttv" || newSite=="utv" || newSite=="sma" || newSite == "mxr"){
 				$("#centerDiv").width("95px");
 				$("#achatMid"+which).show();
 			} else {

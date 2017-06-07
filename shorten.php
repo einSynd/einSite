@@ -37,7 +37,7 @@ td {
 	error_reporting(E_ALL ^ E_STRICT);
 	
 	//Make an array of all the possible sites and their prefixes
-	$prefixList = array('TTV' => 'T', 'LST' => 'L', 'UTV' => 'U', 'SMA' => 'S', 'BEA' => 'B');
+	$prefixList = array('TTV' => 'T', 'LST' => 'L', 'UTV' => 'U', 'SMA' => 'S', 'BEA' => 'B', 'MXR' => 'M');
 	
 	//Generate a string of random characters of length $length with default alphanumeric charset
 	function randString($length, $charset='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789')	{
@@ -123,7 +123,7 @@ td {
 	<option value="LST">Livestream</option>
 	<option value="UTV">UStream</option>
 	<option value="SMA">Smashcast.TV</option>
-    <option value="BEA">Beam.Pro</option>
+    <option value="MXR">Mixer</option>
 </select><br />
 (optional) Short name: &nbsp;<input type="text" name="shortName" maxlength="10" value="" id="shortName" /> (10 characters or less)
 <br /><input type="submit" value="Submit" name="submit" id="submit" /> &nbsp; &nbsp; First letter of the site will be added to the short name

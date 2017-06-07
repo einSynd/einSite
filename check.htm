@@ -148,6 +148,11 @@ function processCookies(){
         if (newObject.site == "hbx"){
             newObject.site = "sma";
         }
+        
+        //Beam changed to Mixer, everything else should be same, so just change site
+        if (newObject.site == "bea"){
+            newObject.site = "mxr";
+        }
             
 		watchedStreams[num] = newObject;
 		
@@ -247,7 +252,8 @@ function checkStream(toCheck){
 			statusCode: statusCodeHandler
 		});	
 
-	//Smashcast API request
+	//Smashcast API request (Formerly Hitbox)
+    //  Smashcast currently doesn't allow cross-domain requests. Just keep Hitbox's.
 	} else if(site == "sma"){
 		return $.ajax({
 			type: 'GET',
@@ -267,10 +273,10 @@ function checkStream(toCheck){
 			error: errorHandler,
 			statusCode: statusCodeHandler
 		});
-    //Beam.PRO API request
-    } else if(site == "bea"){
+    //Mixer API request (Formerly Beam)
+    } else if(site == "mxr"){
         return $.ajax({
-            url: 'https://beam.pro/api/v1/channels/' + stream,
+            url: 'https://mixer.com/api/v1/channels/' + stream,
             timeout: 10000,
             success: function(data) { handleBeam(data, toCheck); },
 			error: errorHandler,

@@ -314,7 +314,7 @@ Stream 1: &nbsp;&nbsp;<input type="text" name="s1" value="<?php echo $txt1; ?>" 
 <option value="utv" <?php if($streams["stream1site"]=="utv"){ echo 'selected';} ?>>UStream</option>
 <option value="sma" <?php if($streams["stream1site"]=="sma"){ echo 'selected';} ?>>Smashcast.TV</option>
 <!--<option value="cas" <?php if($streams["stream1site"]=="cas"){ echo 'selected';} ?>>ConnectCast</option>-->
-<option value="bea" <?php if($streams["stream1site"]=="bea"){ echo 'selected';} ?>>Beam.Pro</option>
+<option value="mxr" <?php if($streams["stream1site"]=="mxr"){ echo 'selected';} ?>>Mixer</option>
 <option value="you" <?php if($streams["stream1site"]=="you"){ echo 'selected';} ?>>Youtube</option>
 <option value="ypl" <?php if($streams["stream1site"]=="ypl"){ echo 'selected';} ?>>Youtube (Playlist)</option>
 </select><div id="dropdownIcon1"></div>
@@ -327,7 +327,7 @@ Stream 2: &nbsp;&nbsp;<input type="text" name="s2" value="<?php echo $txt2; ?>" 
 <option value="utv" <?php if($streams["stream2site"]=="utv"){ echo 'selected';} ?>>UStream</option>
 <option value="sma" <?php if($streams["stream2site"]=="sma"){ echo 'selected';} ?>>Smashcast.TV</option>
 <!--<option value="cas" <?php if($streams["stream2site"]=="cas"){ echo 'selected';} ?>>ConnectCast</option>-->
-<option value="bea" <?php if($streams["stream2site"]=="bea"){ echo 'selected';} ?>>Beam.Pro</option>
+<option value="mxr" <?php if($streams["stream2site"]=="mxr"){ echo 'selected';} ?>>Mixer</option>
 <option value="you" <?php if($streams["stream2site"]=="you"){ echo 'selected';} ?>>Youtube</option>
 <option value="ypl" <?php if($streams["stream2site"]=="ypl"){ echo 'selected';} ?>>Youtube (Playlist)</option>
 </select><div id="dropdownIcon2"></div>

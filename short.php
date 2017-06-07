@@ -18,6 +18,8 @@
 		$req = $req . "WHERE site='SMA' AND short='" . $stream . "';";
     } else if (substr($stream, 0, 1) == "B") {
         $req = $req . "WHERE site='BEA' AND short='" . $stream . "';";
+    } else if (substr($stream, 0, 1) == "M") {
+        $req = $req . "WHERE site='MXR' AND short='" . $stream . "';";
 	} else {
 		$req = $req . "WHERE short='".$stream."';";
 	}
@@ -38,6 +40,9 @@
 		$found = mysqli_fetch_array($result);
         if( $found["site"] == "HBX" ){
             $found["site"] = "SMA";
+        }
+        if( $found["site"] == "BEA" ){
+            $found["site"] = "MXR";
         }
 		echo "Found stream: " . $stream . " => " . $found["name"] . " on " . $found["site"] . "<br />";
 		echo "Redirecting to: http://einsynd.pw/p?s=" . $found["name"] . "," . $found["site"] . "<br />";
