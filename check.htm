@@ -278,7 +278,7 @@ function checkStream(toCheck){
         return $.ajax({
             url: 'https://mixer.com/api/v1/channels/' + stream,
             timeout: 10000,
-            success: function(data) { handleBeam(data, toCheck); },
+            success: function(data) { handleMixer(data, toCheck); },
 			error: errorHandler,
 			statusCode: statusCodeHandler
         });
@@ -445,8 +445,8 @@ function handleSmashcast(data, toCheck) {
 	}
 }
 
-//Set div for handled Beam stream.
-function handleBeam(data, toCheck){
+//Set div for handled Mixer stream.
+function handleMixer(data, toCheck){
 //  console.log(data);
     var divID = "#" + toCheck;
 	var tempObj = watchedStreams[toCheck];
@@ -455,7 +455,7 @@ function handleBeam(data, toCheck){
 	var wasLive = tempObj.wasLive;
     
     if( data.online == true) {
-        var link = "<a href='//beam.pro/" + stream + "' target='_blank'>";
+        var link = "<a href='//mixer.com/" + stream + "' target='_blank'>";
         var game = (data.type != null) ? " - " + data.type.name : "";
         $(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewersCurrent + "v]: " + data.name + game).css({background: "green"});
         
@@ -1007,7 +1007,7 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="text" name="checkStream" value="" id="checkStream" />
 <select name="site" id="site">
 	<option value="ttv" selected>Twitch.TV</option><option value="SMA">Smashcast</option>
-    <option value="bea">Beam.PRO</option>
+    <option value="mxr">Mixer</option>
 	<option value="utv">UStream</option><option value="lst">Livestream</option>
 </select><div id="dropdownIcon"></div><br />
 <input type="submit" value="Check Status" name="submit" id="submit" onclick="addStream();" />
