@@ -338,7 +338,12 @@ function handleTwitch(data, toCheck) {
 			
 			var link = "<a href='"+data.channel.url+"' target='_blank'>";
             var game = (data.game != null) ? " - " + data.game : "";
-			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game).css({background: "green"});
+			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game);
+            if( data.stream_type == "live"){
+                $(divID).css({background: "green"});
+            } else {
+                $(divID).css({background: "#990"});
+            }
             
             game = (data.game != null) ? " [" + data.game + "]" : "";
 			$(divID).prop("title",data.channel.status + game + " -- " + data.viewers + " viewers.");
@@ -554,11 +559,17 @@ function handleMassTwitch(data, twitchStreams){
     $.each(data, function(index,response){
         var twitchID = response.channel._id;
         var twitchName = response.channel.name;
+        var twitchDispName = response.channel.display_name;
+        var twitchType = response.stream_type;
         var thisStream = twitchStreams[twitchID];
         
         //API reports a different stream name belonging to a checked stream ID, so update.
-        if(twitchName !== thisStream.name){
-            thisStream.name = twitchName;
+        if( twitchName !== thisStream.name.toLowerCase() ){
+            if( twitchName == twitchDispName.toLowerCase() ){
+                thisStream.name = twitchDispName;
+            } else {
+                thisStream.name = twitchName;
+            }
         }
 
         var link = "<a href='"+response.channel.url+"' target='_blank'>";
@@ -568,6 +579,7 @@ function handleMassTwitch(data, twitchStreams){
         //Change the "game" to fit better for a tooltip
         game = (response.game != null) ? " [" + response.game + "]" : "";
         thisStream.tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
+        thisStream.liveType = twitchType;
     });
     
     //Foreach through all of the Twitch streams
@@ -578,8 +590,13 @@ function handleMassTwitch(data, twitchStreams){
             $(divID).html(favicon + twitch.name + ": Offline").css({background: "red"});
 			$(divID).prop("title","");
         } else {
-            $(divID).html(twitch.status).css({background: "green"});
+            $(divID).html(twitch.status);
             $(divID).prop("title",twitch.tooltip);
+            if( twitch.liveType == "live" ) {
+                $(divID).css({background: "green"});
+            } else {
+                $(divID).css({background: "#990"});
+            }
         }
         
         //If streamer changed name, ID will be the same but channel won't. Update from live check.
