@@ -49,6 +49,8 @@ html, body { margin: 0px; padding: 0px; }
 #colorButtons { float: right; padding: 0 5 0 0; }
 input { margin: 0px; padding: 0px; }
 #content { display: inline-block; padding: 10 0 5 5; margin: 15 0 0 0;}
+.line { display: inline; }
+
 </style>
 </head>
 <body>
