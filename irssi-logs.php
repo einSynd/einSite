@@ -3,6 +3,7 @@
 <title>IRC Log Viewer</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
 <script type="text/javascript" src="Autolinker.min.js"></script>
+<meta name="viewport" content="width=device-width, intial-scale=1" />
 <style>
 .fore00 { color: #FFFFFF; }
 .fore01 { color: #000000; }
@@ -46,11 +47,11 @@ body, .nocolor-black{ color: white; background-color: black; }
 a{ color: inherit !important; }
 
 html, body { margin: 0px; padding: 0px; }
-nav { position: fixed; width: 100%; border-bottom: 1px solid #000; background: inherit; 
+nav { position: fixed; width: 100%; border-bottom: 1px solid #FF; background: inherit; 
             top: 0px; padding: 2 5; }
 #colorButtons { float: right; padding: 0 5 0 0; }
 input { margin: 0px; padding: 0px; }
-#content { display: inline-block; padding: 10 0 5 5; margin: 15 0 0 0;}
+#content { display: inline-block; padding: 10 0 5 5; margin: 15 0 0 0; width: 100%;}
 #currentLog { width: 80px; }
 .line { display: inline; }
 
@@ -214,7 +215,7 @@ function goDate(){
 $(document).ready(function(){
     var btnGoDate = document.getElementById("goDate");
     var txtCurLog = document.getElementById("currentLog");
-
+    
     txtCurLog.addEventListener("keypress", function(event) {
         if (event.keyCode == 13)
             btnGoDate.click();

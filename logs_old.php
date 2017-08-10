@@ -2,6 +2,7 @@
 <head>
 <title>IRC Log Viewer</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js" type="text/javascript"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js" type="text/javascript"></script>
 <script type="text/javascript" src="autolinker.min.js"></script>
 <meta name="viewport" content="width=device-width, intial-scale=1" />
 <style>
@@ -93,7 +94,8 @@ function changeColor(bgColor){
 }
 
 function fileCheck(date, first){
-    if(date==""){ date="today"; }
+    if(date==""){ date="2017-06-02"; }
+    var folder = "vgzlogs_old"
     //Get today minus five hours because GMT-5
     var today = new Date();
     today.setTime(today.getTime() - 5 * 60 * 60 * 1000);
@@ -105,9 +107,13 @@ function fileCheck(date, first){
         date = today;
     }
     
+    if(new Date(date) < new Date("2011-07-05")) {
+        folder = "vgzlogs_older"
+    }
+    
     $("#currentLog").val(date);
     $("#content").html("Fetching log, please wait.");
-    file = "http://" + window.location.host + "/vgzlogs/%23vidyagamez." + date + ".log";
+    file = "http://" + window.location.host + "/" + folder + "/%23vidyagamez." + date + ".log";
     console.log(file)
     $.get(file)
     .done(function(data) { 
@@ -115,6 +121,7 @@ function fileCheck(date, first){
         //Split and rejoin the greater than and less than signs; a bit faster than global regex
         data = data.split("<").join("&lt;");
         data = data.split(">").join("&gt;");
+        
         data = "<span class='line'>" + data;        
         //Turn unicode 0002 (stx) into Strong tag for bold
         data = data.replace(/\u0002/g,"<strong>");
