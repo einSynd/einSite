@@ -197,7 +197,7 @@ function toggleFavicons() {
 function makePopup(stream) {
     var width = 640;
     var height = 360;
-    var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 10;
+    var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 50;
     var top = (window.screenY != 'undefined' ? window.screenY : window.screenTop) + 200;
 	var windowFeatures = ",menubar=no,toolbar=no,scrollbars=no,resizable=yes," +
             "left=" + left + ",top=" + top + "screenX=" + left + ",screenY=" + top;
@@ -417,7 +417,6 @@ function handleUStream(data, toCheck) {
 //Set div for handled Smashcast stream.
 function handleSmashcast(data, toCheck) {
 	var divID = "#" + toCheck;
-    data = JSON.parse(data);
 	var tempObj = watchedStreams[toCheck];
 	var stream = tempObj.stream;
 	var site = tempObj.site;
@@ -425,16 +424,16 @@ function handleSmashcast(data, toCheck) {
 	
 	// Initially had to handle offline separately since it returned a string instead of an array,
 	// but it looks like they've fixed that now. Check for "media_is_live".
-	if( data["livestream"] == null ) { 
-		if( data["error"] == true ){
-            if( data["error_msg"] == "no_media_found" ){
+	if( data.livestream == null ) { 
+		if( data.error == true ){
+            if( data.error_msg == "no_media_found" ){
                 $(divID).html(getFavicon(site) + stream + " does not exist");
             } else {
                 $(divID).html(getFavicon(site) + stream + ": " + data["error_msg"]);
             }
 		}
-	} else if( data["media_type"] == "live" && data["livestream"][0]["media_is_live"] == "1"){
-		data = data["livestream"][0];
+	} else if( data.media_type == "live" && data.livestream[0].media_is_live == "1"){
+		data = data.livestream[0];
 		link = "<a href='"+data.channel.channel_link+"' target='_blank'>";
 		$(divID).html(getFavicon(site) + link + stream + "</a>[" + data.media_views + "v]: " + data.media_status + ((data.category_name != null) ? " - " + data.category_name : "")).css({background: "green"});
 		$(divID).prop("title",data.media_status + ((data.category_name != null) ? " - " + data.category_name : "") + " -- " + data.media_views + " viewers.");
@@ -506,9 +505,10 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
         } else if( errorThrown == ""){
             //Some sort of error, probably cross-domain but no way of knowing
             $(divID).html(getFavicon(site) + stream + "</div>: Error Requesting Info");
+        } else if( errorThrown == "Not Found") {
+            $(divID).html(getFavicon(site) + stream + " does not exist");
         } else {
-            console.log(textStatus + ": " + errorThrown);
-            
+            console.log(textStatus + ": " + errorThrown);            
         }
 	} else {
 		//If somehow an error was thrown that wasn't a string?
@@ -796,6 +796,7 @@ function getUstreamID(stream, streamNum){
             tempObj.streamID = data;
             watchedStreams[streamNum] = tempObj;
             checkStream(streamNum);
+            $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
         },
         error: function(){
             console.log("UStream ID error, stream: "+ stream + ", div number " + streamNum);
