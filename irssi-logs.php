@@ -117,8 +117,8 @@ function fileCheck(date, first){
         
         //Parse the raw log into something vaguely HTML compatible
         //Split and rejoin the greater than and less than signs; a bit faster than global regex
-        data = data.split("/?<").join("&lt;");
-        data = data.split("/?>").join("&gt;");
+        data = data.split("<").join("&lt;");
+        data = data.split(">").join("&gt;");
         data = "<span class='line'>" + data;
         
         //Turn unicode 0002 (stx) into Strong tag for bold
