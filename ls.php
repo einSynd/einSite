@@ -303,12 +303,12 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 
 	var embedSWF="";
 	if(makeSite=="lst") { embedSWF = lst + lst2 + streamToMake; params["movie"] = lst; flashVars = LSFlashVars; }
-	else if(makeSite=="utv") { embedSWF = utv + utv2 + streamToMake; params["movie"] = utv; flashVars = UTVFlashVars; }
+//	else if(makeSite=="utv") { embedSWF = utv + utv2 + streamToMake; params["movie"] = utv; flashVars = UTVFlashVars; }
 //	else if(makeSite=="ttv") { embedSWF = ttv + ttv2 + streamToMake; params["movie"] = ttv; flashVars = TTVFlashVars; }	
 	else if(makeSite=="htv") { embedSWF = htv + htv2 + streamToMake; params["movie"] = htv; flashVars = HTVFlashVars; }
 	
-	//This grew from Veemi, it has to be in an iframe or it won't work, which breaks everything else.
-	//Luckily, this has made it easy to embed other sites that use iframes. Currently, smashcast and Youtube.
+	//Most streaming sites are moving to iframes that build the interface on
+    //Use those instead of swfobject
 	else {
 		//Make sure the stream is gone, then prepare a fresh div
 		if($("#stream"+whatDiv).is("object")) {
@@ -323,6 +323,9 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 		//Add the appropriate IFrame to the div
 		if(makeSite=="vee") {
 			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency=true src=http://www.veemi.com/embed.php?v="+streamToMake+"&vw=100%&vh=100%&domain=einsynd.pw></iframe>");
+        }
+        else if(makeSite=="utv") {
+            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://www.ustream.tv/embed/"+streamToMake+"?html5ui></iframe>");    
 		} else if(makeSite=="sma") {
 			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen src=//www.smashcast.tv/#!/embed/"+streamToMake+"?autoplay=true></iframe>");
 		} else if(makeSite=="you") {
@@ -331,8 +334,6 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 			$("#stream"+whatDiv).append("<iframe id='youframe' width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen autoplay src=https://www.youtube.com/embed/videoseries?list="+streamToMake+"></iframe>");
 		} else if(makeSite=="ttv") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.twitch.tv/?volume=1&channel="+streamToMake+"></iframe>");
-        } else if(makeSite=="uh5") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://www.ustream.tv/channel/"+streamName.toLowerCase()+"/pop-out></iframe>");
         } else if(makeSite=="cas") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://connectcast.tv/popout/live/"+streamToMake+"></iframe>");
         } else if(makeSite=="mxr") {
