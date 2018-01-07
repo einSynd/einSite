@@ -240,7 +240,7 @@ function makeChat(stream,streamSite) {
 
 	windowFeatures = "width=" + width + ",height=" + height + windowFeatures;
 	if(streamSite=="ttv" || streamSite=="th5") {
-		window.open("http://www.twitch.tv/"+stream+"/chat?popout=&secret=safe", stream + " chat window", windowFeatures);
+		window.open(host = "/tchat.php?s=" + stream, stream + " chat window", windowFeatures);
 	} else if(streamSite=="sma") {
 		window.open("http://www.smashcast.tv/embedchat/"+stream+"?autoconnect=true", stream + " chat window", windowFeatures);
     } else if(streamSite=="mxr") {
