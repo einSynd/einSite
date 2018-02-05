@@ -193,7 +193,7 @@ function toggleFavicons() {
 	$.cookie("favicons", favicons, { expires: 30 });    //Set cookie so favicon setting persists
 }
 
-//Makes popup of the stream when it's middle-clicked
+//Makes popup of the stream when it's double-clicked
 function makePopup(stream) {
     var width = 640;
     var height = 360;
@@ -935,8 +935,7 @@ function toggleList() {
 	$.cookie("listMode", listMode, { expires: 30 });
 }
 
-function middleClick(divID, button) {
-	if( button != 2 ) { return }
+function doubleClick(divID) {
 	
 	var tempID = $(divID).prop("id");
 	var stream = watchedStreams[tempID].stream;
@@ -985,8 +984,8 @@ $(document).ready(function(){
 	processCookies();
 	
 	//Clicks to stream divs are sent to main streamArea div, which
-	//	filters out middle clicks to open popups for the clicked stream.
-	$("#streamArea").delegate(".info", "mousedown.middle", function(b) { middleClick(this, b.which); });
+	//	filters out double clicks to open popups for the clicked stream.
+	$("#streamArea").on("dblclick", ".info", function() { doubleClick(this); });
 	
 	$("#savePBdiv").on("click", function() { $("#savePB").click(); });
 	$("#delPBdiv").on("click", function() { $("#delPB").click(); });
@@ -1033,10 +1032,11 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
 <div id="favCheckDiv" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
 List of streams is saved in cookies.<br />
-Middle click the colored box to open a popup for the stream.<br />
+<strong>Double click</strong> the colored box to open a popup for the stream.<br />
 If the description is too long, mouseover the box for a tooltip.<br />
 <br /><!--
     * Disabled PushBullet due to new 100-push automated limit, plus vague reports of not working.
+    
 (Optional) Enter a <a href="https://www.pushbullet.com/">PushBullet</a> access token to get alerts when streams go live.<br />
 Device ID is optional. Leaving it blank will send to all devices.<br />
 &nbsp; Token: &nbsp; &nbsp; <input type="text" name="accessToken" value="" id="accessToken" /> (Found <a href="https://www.pushbullet.com/account">here</a> if logged in)<br />
