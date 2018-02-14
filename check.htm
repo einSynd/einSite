@@ -1003,9 +1003,7 @@ function toggleSorting() {
 }
 
 function sortLiveStreams() {
-    //Unsort them so they'll be in the proper order and not just bubble up
-    unsortLiveStreams();
-    
+    //Prepend each live stream to a different div to sort them
     $.each($("#streamArea .stream"), function(a,b){
         if($(b).hasClass("live")){
             $("#liveTemp").prepend($(b));
@@ -1014,9 +1012,12 @@ function sortLiveStreams() {
         }
     });
     
-    $.each($("#liveTemp .stream"), function(a,b){
-        $("#streamArea").prepend($(b));
-    });
+    //Sort the live streams so they show up in the proper order when put back
+    $("#liveTemp .stream").sort(function(a,b){
+        var id1 = parseInt($(a).prop("id"));
+        var id2 = parseInt($(b).prop("id"));
+        return id1 > id2
+    }).prependTo($("#streamArea"));
 }
 
 function unsortLiveStreams(){
