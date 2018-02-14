@@ -62,6 +62,14 @@ body { margin: 0; }
 #dropdownIcon { display: inline-block; height: 14px; }
 #favCheckDiv { width: 120px; }
 .nowrap { display: inline-block; white-space: nowrap; }
+
+#liveTemp { display: none; }
+
+.info { background: orange; }
+.live { background: green; }
+.rerun { background: "#990"; }
+.offline { background: red; }
+
 </style>
 </head>
 <body bgcolor="#99999">
@@ -70,6 +78,7 @@ var watchedStreams = [ ];
 var listMode = false;
 var host = "http://" + window.location.host;
 var favicons = true;
+var sorting = false;
 var jqXHRGlobal = "";
 
 //Creates an object out of stream, site, and ID
@@ -89,6 +98,16 @@ streamObj.prototype.toString = function streamString() {
 	if( this.streamID != "" ){ strRet = strRet + ":" + this.streamID; }
 	strRet = strRet + "-" + this.site;
 	return strRet;
+}
+
+//Removes all status classes from a div and sets it to current status.
+function setLiveStatus(divID, status) {
+    $(divID).removeClass("info");
+    $(divID).removeClass("live");
+    $(divID).removeClass("rerun");
+    $(divID).removeClass("offline");
+    
+    $(divID).addClass(status);
 }
 
 //Takes a string representing both stream and site and breaks it into its
@@ -131,6 +150,13 @@ function processCookies(){
 		favicons = ($.cookie("favicons") == "true");
 		$.cookie("favicons", favicons, { expires: 30 });
 	}
+    
+    if($.cookie("sorting")){
+		//If a cookie exists named "sorting", set the variable "sorting"
+		//	Toggles whether live streams are sorted to the top.
+		sorting = ($.cookie("sorting") == "true");
+		$.cookie("sorting", sorting, { expires: 30 });
+	}
 	
 	if($.cookie("pushBullet")){
 		var PBinfo = $.cookie("pushBullet").replace("%3B",";")
@@ -161,14 +187,14 @@ function processCookies(){
 		var streamID = newObject.streamID;
         
 		//Adds div to stream area
-		$("#streamArea").append("<div id=" + num + " class='info'>Getting " + stream + "'s Info ...</div>");
+		$("#streamArea").append("<div id=" + num + " class='info stream'>Getting " + stream + "'s Info ...</div>");
 		var newDivID = "#" + num;
 		
 		//Sets class to either list or box based on saved display mode
 		var type = ((listMode) ? "list" : "box");
 		$(newDivID).addClass(type);
 
-		$(newDivID).css({background: "orange"});
+		setLiveStatus(newDivID, "info");
 	});
 }
 
@@ -284,7 +310,7 @@ function checkStream(toCheck){
 			statusCode: statusCodeHandler
         });
 	} else if(site == "jtv"){
-		$("#"+toCheck).html(getFavicon(site) + stream + ": Justin.TV has closed.").css({background: "red"});
+		$("#"+toCheck).html(getFavicon(site) + stream + ": Justin.TV has closed.").addclass("offline");
 	} else {
 		alert("Not supported: site="+site);
 	}
@@ -341,9 +367,9 @@ function handleTwitch(data, toCheck) {
             var game = (data.game != null) ? " - " + data.game : "";
 			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game);
             if( data.stream_type == "live"){
-                $(divID).css({background: "green"});
+                $(divID).addclass("live");
             } else {
-                $(divID).css({background: "#990"});
+                $(divID).addclass("rerun");
             }
             
             game = (data.game != null) ? " [" + data.game + "]" : "";
@@ -355,7 +381,7 @@ function handleTwitch(data, toCheck) {
 			}
 		} else {
 			//It didn't find a "stream" variable, so it must be offline.
-			$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+			$(divID).html(getFavicon(site) + stream + ": Offline").addClass("offline");
 			$(divID).prop("title","");
 			if( wasLive ) {
 				watchedStreams[toCheck].wasLive = false;
@@ -374,13 +400,17 @@ function handleLivestream(data, toCheck) {
 	var wasLive = tempObj.wasLive;
 	
 	if(data.channel.isLive == true){
-		$(divID).html(getFavicon(site) + stream + "[" + data.channel.currentViewerCount + "v] is live!" ).css({background: "green"});
+		$(divID).html(getFavicon(site) + stream + "[" + data.channel.currentViewerCount + "v] is live!" )
+        setLiveStatus(divID, "live");
+        
 		if( wasLive == false ){
 			watchedStreams[toCheck].wasLive = true;
 			sendAlert(stream, site, "is now live!");
 		}
 	} else {
-		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		$(divID).html(getFavicon(site) + stream + ": Offline")
+        setLiveStatus(divID, "offline");
+        
 		if( wasLive ) {
 			watchedStreams[toCheck].wasLive = false;
 		}
@@ -401,13 +431,17 @@ function handleUStream(data, toCheck) {
 	var wasLive = tempObj.wasLive;
 
 	if(data.channel.status == "live"){
-		$(divID).html(getFavicon(site) + stream + " is live!" ).css({background: "green"});
+		$(divID).html(getFavicon(site) + stream + " is live!" );
+        setLiveStatus(divID, "live");
+        
 		if( wasLive == false ){
 			watchedStreams[toCheck].wasLive = true;
 			sendAlert(stream, site, "is now live!");
 		}
 	} else {
-		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		$(divID).html(getFavicon(site) + stream + ": Offline");
+        setLiveStatus(divID, "offline");
+        
 		if( wasLive ) {
 			watchedStreams[toCheck].wasLive = false;
 		}
@@ -435,15 +469,18 @@ function handleSmashcast(data, toCheck) {
 	} else if( data.media_type == "live" && data.livestream[0].media_is_live == "1"){
 		data = data.livestream[0];
 		link = "<a href='"+data.channel.channel_link+"' target='_blank'>";
-		$(divID).html(getFavicon(site) + link + stream + "</a>[" + data.media_views + "v]: " + data.media_status + ((data.category_name != null) ? " - " + data.category_name : "")).css({background: "green"});
+		$(divID).html(getFavicon(site) + link + stream + "</a>[" + data.media_views + "v]: " + data.media_status + ((data.category_name != null) ? " - " + data.category_name : ""));
 		$(divID).prop("title",data.media_status + ((data.category_name != null) ? " - " + data.category_name : "") + " -- " + data.media_views + " viewers.");
+        setLiveStatus(divID, "live");
+        
 		if( wasLive == false ){
 			watchedStreams[toCheck].wasLive = true;
 			sendAlert(stream, site, data.media_status + ((data.category_name != null) ? " - " + data.category_name : ""));
 		}
 	} else {
-		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		$(divID).html(getFavicon(site) + stream + ": Offline");
 		$(divID).prop("title","");
+        setLiveStatus(divID, "offline");
 		if( wasLive ) {
 			watchedStreams[toCheck].wasLive = false;
 		}
@@ -462,12 +499,14 @@ function handleMixer(data, toCheck){
     if( data.online == true) {
         var link = "<a href='//mixer.com/" + stream + "' target='_blank'>";
         var game = (data.type != null) ? " - " + data.type.name : "";
-        $(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewersCurrent + "v]: " + data.name + game).css({background: "green"});
+        $(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewersCurrent + "v]: " + data.name + game);
+        setLiveStatus(divID, "live");
         
         game = (data.type != null) ? " [" + data.type.name + "]" : "";
         $(divID).prop("title",data.name + game + " -- " + data.viewersCurrent + " viewers.");
     } else {
-        $(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+        $(divID).html(getFavicon(site) + stream + ": Offline");
+        setLiveStatus(divID, "offline");
     }
 }
 
@@ -488,18 +527,18 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
         
 		if (textStatus == "timeout"){
 			$(divID).html(getFavicon(site) + stream + " timed out.");
-			$(divID).css({background: "orange"});
+			setLiveStatus(divID, "info");
             
 		} else if (errorThrown == "Service Unavailable") {
             $(divID).html(getFavicon(site) + stream + ": Unknown (Service Unavailable)");
-            $(divID).css({background: "orange"});
+            setLiveStatus(divID, "info");
         } else if (errorThrown == "Bad Request"){
             if (site == "ttv") {
                 $(divID).html(getFavicon(site) + stream + ": Unknown (Bad Request - Twitch ignored Client ID)");
             } else {
                 $(divID).html(getFavicon(site) + stream + ": Unknown (Bad Request)");
             }
-            $(divID).css({background: "orange"});
+            setLiveStatus(divID, "info");
         } else if( errorThrown == "Unprocessable Entity" ) {
             $(divID).html(getFavicon(site) + stream + "</div>: Channel has been closed for TOS violations");
         } else if( errorThrown == ""){
@@ -512,8 +551,10 @@ function requestError(jqXHR, textStatus, errorThrown, toCheck){
         }
 	} else {
 		//If somehow an error was thrown that wasn't a string?
-		$(divID).html(getFavicon(site) + stream + ": Offline").css({background: "red"});
+		$(divID).html(getFavicon(site) + stream + ": Offline");
 		$(divID).prop("title","");
+        setLiveStatus(divID, "offline");
+        
 		console.log("Request Error: "+textStatus);
 	}
 }
@@ -588,15 +629,16 @@ function handleMassTwitch(data, twitchStreams){
         divID = "#" + twitch.divID;
         //If it wasn't live, its status should still be "Offline"
         if( twitch.status === "Offline") {
-            $(divID).html(favicon + twitch.name + ": Offline").css({background: "red"});
+            $(divID).html(favicon + twitch.name + ": Offline");
 			$(divID).prop("title","");
+            setLiveStatus(divID, "offline");
         } else {
             $(divID).html(twitch.status);
             $(divID).prop("title",twitch.tooltip);
             if( twitch.liveType == "live" ) {
-                $(divID).css({background: "green"});
+                setLiveStatus(divID, "live");
             } else {
-                $(divID).css({background: "#990"});
+                setLiveStatus(divID, "rerun");
             }
         }
         
@@ -608,6 +650,10 @@ function handleMassTwitch(data, twitchStreams){
             console.log("Stream name changed, upating: " + twitch.name);
         }
     });
+    
+    if( $("#sortLiveCheck").is(":checked") ){
+        sortLiveStreams();
+    }
 }
 
 //WIP: Sends alert when stream is live.
@@ -667,7 +713,7 @@ function addStream() {
         //Creates an object with the div's info.
         var divObj = new streamObj(stream, site);
         
-        $(newDivID).css({background: "orange"});
+        setLiveStatus(newDivID, "info");
         
         watchedStreams.push(divObj);
         $.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
@@ -863,9 +909,18 @@ function removeStream(){
 function editMode() {
 	//If class "swappable" isn't on anything, turn on edit mode, else turn off.
 	if( $(".swappable").length <=0 ){
+        console.log("Setting Swappable");
+        wasSorted = false;
 		//Add class "swappable" so we know they can do things."
-		$(".info").addClass("swappable");
+		$(".stream").addClass("swappable");
 		$("#rearrangeExplanation").show();
+        
+        //Rearranging while sorted is currently 
+        if( $("#sortLiveCheck").is(":checked") ){
+            wasSorted = true;
+            $("#sortLiveCheck").prop("disabled", true);
+            toggleSorting();
+        }
 		
 		//Bind a click event to all swappable divs
 		$(".swappable").on("click.swapping", function(b){
@@ -884,14 +939,16 @@ function editMode() {
 					if( id1 != id2 ){
 			
 						//Clone the divs, then replace them
-						var clone1 = $("#"+id1).clone(true);
-						var clone2 = $("#"+id2).clone(true);
+						var clone1 = $("#"+id1).clone(true).prop("id", id2);
+						var clone2 = $("#"+id2).clone(true).prop("id", id1);
 						
 						$("#"+id1).prop("id","s1");
 						$("#"+id2).prop("id","s2");
-						
+                        
 						$("#s1").replaceWith(clone2);
 						$("#s2").replaceWith(clone1);
+                        
+                        
 						
 						//Swap in the arrays and save array to cookie
 						var temp = watchedStreams[id1];
@@ -916,11 +973,54 @@ function editMode() {
 			}
 		});
 	} else {
+        if(wasSorted) {
+            $("#sortLiveCheck").prop("disabled", false);
+            toggleSorting();
+        }
 		$(".swappable").unbind("click.swapping");
 		$(".swappable").removeClass("swappable");
 		$(".swap1").removeClass("swap1");
 		$("#rearrangeExplanation").hide();
 	}
+}
+
+//Process clicking on the div to toggle favicons
+function toggleSorting() {
+    if( $("#sortLiveCheck").is(":disabled") && !$("#sortLiveCheck").is(":checked")) {
+        return;
+    }
+    
+	sorting = !sorting;  //Invert variable
+	$("#sortLiveCheck").prop("checked", sorting);   //Set checkbox to be the same as sorting variable.
+    if( sorting ){
+        sortLiveStreams();
+    } else {
+        unsortLiveStreams();
+    }
+    
+    if( !$("#sortLiveCheck").is(":disabled") ){
+        $.cookie("sorting", sorting, { expires: 30 });  //Set cookie so sorting setting persists
+    }
+}
+
+function sortLiveStreams() {
+    $.each($("#streamArea .stream"), function(a,b){
+        if($(b).hasClass("live")){
+            $("#liveTemp").prepend($(b));
+        } else {
+            $("#streamArea").append($(b));
+        }
+    });
+    
+    $.each($("#liveTemp .stream"), function(a,b){
+        $("#streamArea").prepend($(b));
+    });
+}
+
+function unsortLiveStreams(){
+    $.each($("#streamArea .stream"), function(a,b){
+        $("#streamArea").append($("#"+a));
+    });
 }
 
 function toggleList() {
@@ -1004,7 +1104,10 @@ $(document).ready(function(){
 		var selected = $("#site option:selected").val();
 		$("#dropdownIcon").html(getFavicon(selected));
 	});
+    
 	$("#faviconCheck").prop("checked", favicons); //Set the checkbox based on favicon variable
+    $("#sortLiveCheck").prop("checked", sorting);
+    
 	$("#site").change(); //Auto-trigger it to set up the first one.
 	
 	//Set a timer to do automatic checks.
@@ -1016,6 +1119,7 @@ $(document).ready(function(){
 	$("form").submit(function(event) {event.preventDefault();});
 });
 </script>
+<div id=liveTemp></div>
 <div id=streamArea></div>
 <div id=controls><div id=rearrange onclick="editMode();">Rearrange</div><div id=toggleList onclick="toggleList();">List Mode</div></div>
 <span id=rearrangeExplanation>Click two divs to swap them, click "Rearrange" again to quit</span>
@@ -1031,9 +1135,12 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="submit" value="Check Status" name="submit" id="submit" onclick="addStream();" />
 <input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
 <div id="favCheckDiv" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
+<div id="sortLive" onclick="toggleSorting();"><input type="checkbox" name="sorting" id="sortLiveCheck"/>Sort Live Streams</div>
 List of streams is saved in cookies.<br />
+
 <strong>Double click</strong> the colored box to open a popup for the stream.<br />
 If the description is too long, mouseover the box for a tooltip.<br />
+Currently, can only rearrange streams when they're unsorted.<br />
 <br /><!--
     * Disabled PushBullet due to new 100-push automated limit, plus vague reports of not working.
     
