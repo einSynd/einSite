@@ -650,10 +650,6 @@ function handleMassTwitch(data, twitchStreams){
             console.log("Stream name changed, upating: " + twitch.name);
         }
     });
-    
-    if( $("#sortLiveCheck").is(":checked") ){
-        sortLiveStreams();
-    }
 }
 
 //WIP: Sends alert when stream is live.
@@ -685,7 +681,7 @@ function addStream() {
     var site = $('#site').val();
     var exists = false;
     
-    //Check each stream div (.info) to see if it already exists.
+    //Check each stream div (.stream) to see if it already exists.
     $.each(watchedStreams, function(num, obj) {
         if( obj.stream == stream ){
             if( obj.site == site ) {
@@ -701,10 +697,11 @@ function addStream() {
         console.log("Already checked: '" + stream + "' on " + site);
     } else {
         //Length returns total number, divs start at zero, so length should be one above what we have.
-        var newDivID = $(".info").length;
+        var newDivID = $(".stream").length;
         
-        $("#streamArea").append("<div id='" + newDivID + "' class='info'>Getting " + getFavicon(site) + stream + "'s Info ...</div>");			
+        $("#streamArea").append("<div id='" + newDivID + "'>Getting " + getFavicon(site) + stream + "'s Info ...</div>");			
         newDivID = "#" + newDivID;
+        $(newDivID).addClass(stream)
         
         //If there are things with class "list" then add "list" class, otherwise default to "box" class
         var type = (($(".list").length > 0) ? "list" : "box");
@@ -741,7 +738,7 @@ function prepareCheck(){
     var twitchIDs = [ ];
     var twitchIDList;
     
-    $(".info").each(function(i) {
+    $(".stream").each(function(i) {
         var curID = $(this).prop("id");
         //For each type of div with class "info", request a check.
         if (typeof watchedStreams[curID] !== "undefined"){
@@ -777,6 +774,10 @@ function prepareCheck(){
     
     twitchIDList = twitchIDs.join(",");
     twitchCheck(twitchIDList, twitchStreams);
+    //Add a timer to resort the streams after checking if needed
+    if( $("#sortLiveCheck").is(":checked") ){
+        setTimeout(sortLiveStreams, 300);
+    }
 }
 
 //Performs minor maintenance before directly checking for a stream.
@@ -856,13 +857,13 @@ function getUstreamID(stream, streamNum){
 
 //Removes stream div from the page automatically via div number
 function removeStreamNum(streamNum){
-    //Removes the div from the page
     $("#"+streamNum).remove();
+    
     //Removes the entry in the stream array
     watchedStreams.splice(streamNum, 1);
     
     //Renumbers the divs so there aren't any holes
-    $.each($(".info"), function(num) {
+    $.each($(".stream"), function(num) {
         $(this).prop("id", num);
     });
     
@@ -894,7 +895,7 @@ function removeStream(){
 	
 	//If a stream was removed, re-order the divs and set the cookie
 	if( removed == true ) {
-		$.each($(".info"), function(num) {
+		$.each($(".stream"), function(num) {
 			$(this).prop("id", num);
 		});
 		
@@ -948,8 +949,6 @@ function editMode() {
 						$("#s1").replaceWith(clone2);
 						$("#s2").replaceWith(clone1);
                         
-                        
-						
 						//Swap in the arrays and save array to cookie
 						var temp = watchedStreams[id1];
 						watchedStreams[id1] = watchedStreams[id2];
@@ -961,7 +960,7 @@ function editMode() {
 						$(".swap1").removeClass("swap1");
 						
 						//Reset all the ID numbers
-						$.each($(".info"), function(num) {
+						$.each($(".stream"), function(num) {
 							$(this).prop("id", num);
 						});
 					} else {
@@ -1004,6 +1003,9 @@ function toggleSorting() {
 }
 
 function sortLiveStreams() {
+    //Unsort them so they'll be in the proper order and not just bubble up
+    unsortLiveStreams();
+    
     $.each($("#streamArea .stream"), function(a,b){
         if($(b).hasClass("live")){
             $("#liveTemp").prepend($(b));
@@ -1085,19 +1087,12 @@ $(document).ready(function(){
 	
 	//Clicks to stream divs are sent to main streamArea div, which
 	//	filters out double clicks to open popups for the clicked stream.
-	$("#streamArea").on("dblclick", ".info", function() { doubleClick(this); });
+	$("#streamArea").on("dblclick", ".stream", function() { doubleClick(this); });
 	
 	$("#savePBdiv").on("click", function() { $("#savePB").click(); });
 	$("#delPBdiv").on("click", function() { $("#delPB").click(); });
 	
-	//Page just loaded and streams should be loaded from the cookie, so check 'em all.
-/*	$(".info").each(function(i) {
-		var curID = $(this).prop("id");
-		if (typeof watchedStreams[curID] !== "undefined"){
-			requestCheck(curID);
-		}
-	});
-*/  prepareCheck();
+    prepareCheck();
 	
 	//Set dropdown change to trigger changing favicon next to it
 	$("#site").change(function() {
@@ -1111,10 +1106,12 @@ $(document).ready(function(){
 	$("#site").change(); //Auto-trigger it to set up the first one.
 	
 	//Set a timer to do automatic checks.
-	setInterval(function(){
-		prepareCheck();
-	}, 120000); //120,000 milliseconds = 120 seconds = 2 minutes.
-	
+	setInterval(prepareCheck, 120000); //120,000 milliseconds = 120 seconds = 2 minutes.
+    
+    if( $("#sortLiveCheck").is(":checked") ){
+        setTimeout(sortLiveStreams, 300);
+    }
+    
 	//Don't actually do anything when the forms are used, just run scripts.
 	$("form").submit(function(event) {event.preventDefault();});
 });
