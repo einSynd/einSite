@@ -701,7 +701,7 @@ function addStream() {
         
         $("#streamArea").append("<div id='" + newDivID + "'>Getting " + getFavicon(site) + stream + "'s Info ...</div>");			
         newDivID = "#" + newDivID;
-        $(newDivID).addClass(stream)
+        $(newDivID).addClass("stream")
         
         //If there are things with class "list" then add "list" class, otherwise default to "box" class
         var type = (($(".list").length > 0) ? "list" : "box");
