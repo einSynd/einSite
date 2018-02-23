@@ -1009,6 +1009,7 @@ function sortLiveStreams() {
     //Sort the streams and add them to the bottom of stream area in the order they should appear
     $("#streamArea .live").sort(streamSortFunc).appendTo($("#streamArea"));
     $("#streamArea .rerun").sort(streamSortFunc).appendTo($("#streamArea"));
+    $("#streamArea .info").sort(streamSortFunc).appendTo($("#streamArea"));
     $("#streamArea .offline").sort(streamSortFunc).appendTo($("#streamArea"));    
 }
 
