@@ -650,6 +650,7 @@ function handleMassTwitch(data, twitchStreams){
             console.log("Stream name changed, upating: " + twitch.name);
         }
     });
+    sortLiveStreams();
 }
 
 //WIP: Sends alert when stream is live.
@@ -774,7 +775,6 @@ function prepareCheck(){
     
     twitchIDList = twitchIDs.join(",");
     twitchCheck(twitchIDList, twitchStreams);
-    sortLiveStreams();
 }
 
 //Performs minor maintenance before directly checking for a stream.
