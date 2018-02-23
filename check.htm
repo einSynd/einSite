@@ -63,8 +63,6 @@ body { margin: 0; }
 #favCheckDiv { width: 120px; }
 .nowrap { display: inline-block; white-space: nowrap; }
 
-#liveTemp, #rerunTemp, #offlineTemp { display: none; }
-
 .info { background: orange; }
 .live { background: green; }
 .rerun { background: #990; }
@@ -438,6 +436,8 @@ function handleUStream(data, toCheck) {
 			watchedStreams[toCheck].wasLive = true;
 			sendAlert(stream, site, "is now live!");
 		}
+        sortLiveStreams();
+        
 	} else {
 		$(divID).html(getFavicon(site) + stream + ": Offline");
         setLiveStatus(divID, "offline");
@@ -774,10 +774,7 @@ function prepareCheck(){
     
     twitchIDList = twitchIDs.join(",");
     twitchCheck(twitchIDList, twitchStreams);
-    //Add a timer to resort the streams after checking if needed
-    if( $("#sortLiveCheck").is(":checked") ){
-        setTimeout(sortLiveStreams, 500);
-    }
+    sortLiveStreams();
 }
 
 //Performs minor maintenance before directly checking for a stream.
@@ -1003,35 +1000,16 @@ function toggleSorting() {
 }
 
 function streamSortFunc(i,j){
-        var id1 = parseInt($(i).prop("id"));
-        var id2 = parseInt($(j).prop("id"));
-        if( id1 > id2 ){
-            return 1;
-        } else if( id1 < id2 ) {
-            return -1;
-        } else {
-            return 0;
-        }
-    }
+    var id1 = parseInt($(i).prop("id"));
+    var id2 = parseInt($(j).prop("id"));
+    return id1 - id2;
+}
 
 function sortLiveStreams() {
-    //Prepend each live stream to a different div to sort them
-    $.each($("#streamArea .stream"), function(a,b){
-        if($(b).hasClass("live")){
-            $("#liveTemp").prepend($(b));
-        } else if ($(b).hasClass("rerun")){
-            $("#rerunTemp").append($(b));
-        } else {
-            $("#offlineTemp").append($(b));
-        }
-    });
-    
-    //Sort the streams so they show up in the proper order when put back
-    $("#liveTemp .stream").sort(streamSortFunc).appendTo($("#streamArea"));
-    $("#rerunTemp .stream").sort(streamSortFunc).appendTo($("#streamArea"));
-    $("#offlineTemp .stream").sort(streamSortFunc).appendTo($("#streamArea"));
-    
-    
+    //Sort the streams and add them to the bottom of stream area in the order they should appear
+    $("#streamArea .live").sort(streamSortFunc).appendTo($("#streamArea"));
+    $("#streamArea .rerun").sort(streamSortFunc).appendTo($("#streamArea"));
+    $("#streamArea .offline").sort(streamSortFunc).appendTo($("#streamArea"));    
 }
 
 function unsortLiveStreams(){
@@ -1131,7 +1109,6 @@ $(document).ready(function(){
 	$("form").submit(function(event) {event.preventDefault();});
 });
 </script>
-<div id=liveTemp></div><div id=rerunTemp></div><div id=offlineTemp></div>
 <div id=streamArea></div>
 <div id=controls><div id=rearrange onclick="editMode();">Rearrange</div><div id=toggleList onclick="toggleList();">List Mode</div></div>
 <span id=rearrangeExplanation>Click two divs to swap them, click "Rearrange" again to quit</span>
