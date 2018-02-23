@@ -339,6 +339,7 @@ function handleTwitch(data, toCheck) {
 		} else {
 			console.log("Unhandled error: '"+ data.error + "' on #" + toCheck);
 		}
+        setLiveStatus(divID, "info");
 	} else {
 		if( data.stream != null){
 			//If there's a "stream" variable, the stream is live
@@ -365,9 +366,9 @@ function handleTwitch(data, toCheck) {
             var game = (data.game != null) ? " - " + data.game : "";
 			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game);
             if( data.stream_type == "live"){
-                $(divID).addclass("live");
+                setLiveStatus(divID, "live");
             } else {
-                $(divID).addclass("rerun");
+                setLiveStatus(divID, "rerun");
             }
             
             game = (data.game != null) ? " [" + data.game + "]" : "";
@@ -377,10 +378,14 @@ function handleTwitch(data, toCheck) {
 				watchedStreams[toCheck].wasLive = true;
 				sendAlert(stream, site, data.channel.status);
 			}
+            
+            sortLiveStreams();
+            
 		} else {
 			//It didn't find a "stream" variable, so it must be offline.
 			$(divID).html(getFavicon(site) + stream + ": Offline").addClass("offline");
 			$(divID).prop("title","");
+            setLiveStatus(divID, "offline");
 			if( wasLive ) {
 				watchedStreams[toCheck].wasLive = false;
 			}
@@ -801,7 +806,6 @@ function getTwitchID(stream, streamNum){
         type: "get",
         timeout: 10000,
         success: function(data){
-//          console.log("Twitch ID Successfully requested");
             //Good news, it returns properly if there were no results.
             if( data["_total"] === 0 ){
                 console.log("Twitch ID success, doesn't exist. stream: " + stream + ", div number " + streamNum);
@@ -1006,11 +1010,13 @@ function streamSortFunc(i,j){
 }
 
 function sortLiveStreams() {
-    //Sort the streams and add them to the bottom of stream area in the order they should appear
-    $("#streamArea .live").sort(streamSortFunc).appendTo($("#streamArea"));
-    $("#streamArea .rerun").sort(streamSortFunc).appendTo($("#streamArea"));
-    $("#streamArea .info").sort(streamSortFunc).appendTo($("#streamArea"));
-    $("#streamArea .offline").sort(streamSortFunc).appendTo($("#streamArea"));    
+    if( $("#sortLiveCheck").is(":checked") ) {
+        //Sort the streams and add them to the bottom of stream area in the order they should appear
+        $("#streamArea .live").sort(streamSortFunc).appendTo($("#streamArea"));
+        $("#streamArea .rerun").sort(streamSortFunc).appendTo($("#streamArea"));
+        $("#streamArea .info").sort(streamSortFunc).appendTo($("#streamArea"));
+        $("#streamArea .offline").sort(streamSortFunc).appendTo($("#streamArea"));    
+    }
 }
 
 function unsortLiveStreams(){
