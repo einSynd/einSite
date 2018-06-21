@@ -36,10 +36,11 @@ body { margin: 0; }
 	width: 100%;
 	margin: 0;
 	padding: 0;
+	white-space: nowrap;
+	display: flex;
 }
 
-#rearrange, #toggleList {
-	display: inline-block;
+#toggleList, #swap, #insert {
 	border: 1px solid #000;
 	width: 50%;
 	text-align: center;
@@ -48,10 +49,14 @@ body { margin: 0; }
 	box-sizing: border-box;
 }
 
-#rearrangeExplanation { display: none; } 
+#swap, #insert {
+	width: 25%;
+}
+
+#swapExplanation, #insertExplanation { display: none; } 
 #disablePushB, #testPushB { display: none; }
 #delPBdiv { display: none; }
-.swap1 { border: 1px solid #ADD8E6; }
+.swap1, .insert1 { border: 1px solid #ADD8E6; }
 
 .disabledText {
 	background: #666;
@@ -908,21 +913,20 @@ function removeStream(){
 }
 
 //Allow swapping of streams
-function editMode() {
+//	Click two streams to swap the two
+function swapMode() {
 	//If class "swappable" isn't on anything, turn on edit mode, else turn off.
-	if( $(".swappable").length <=0 ){
-        console.log("Setting Swappable");
-        wasSorted = false;
-		//Add class "swappable" so we know they can do things."
+	if( $(".swappable").length <= 0 ){
+		//Ignore it if they're already in insert mode
+		if( $(".insertable").length > 0 ){
+			return
+		}
+		
+		//Add class "swappable" so we know they can do things.
 		$(".stream").addClass("swappable");
-		$("#rearrangeExplanation").show();
-        
-        //Rearranging while sorted is currently 
-        if( $("#sortLiveCheck").is(":checked") ){
-            wasSorted = true;
-            $("#sortLiveCheck").prop("disabled", true);
-            toggleSorting();
-        }
+		$("#swapExplanation").show();
+		$("#insert").addClass("disabledText");
+		
 		
 		//Bind a click event to all swappable divs
 		$(".swappable").on("click.swapping", function(b){
@@ -959,32 +963,127 @@ function editMode() {
 						
 						//Remove ".swap1" from all divs with that class since a swap was made
 						$(".swap1").removeClass("swap1");
-						
-						//Reset all the ID numbers
-						$.each($(".stream"), function(num) {
-							$(this).prop("id", num);
-						});
 					} else {
-						//ID1 == ID2, shouldn't be possible. Log it, just in case.
-						console.log("Just tried to swap, id1 == id2 (" + id1 + ")");
+						//Clicked on same stream, maybe they don't want to sort
+						$(".swap1").removeClass("swap1");
 					}
 					
 				}
 			}
 		});
 	} else {
-        if(wasSorted) {
-            $("#sortLiveCheck").prop("disabled", false);
-            toggleSorting();
-        }
 		$(".swappable").unbind("click.swapping");
 		$(".swappable").removeClass("swappable");
 		$(".swap1").removeClass("swap1");
-		$("#rearrangeExplanation").hide();
+		$("#swapExplanation").hide();
+		$("#insert").removeClass("disabledText");
 	}
 }
 
-//Process clicking on the div to toggle favicons
+//Allow insertion sorting of streams
+//	Click two streams, first stream gets put directly in front of second stream
+function insertMode() {
+	//If class "insertable" isn't on anything, turn on edit mode, otherwise turn off
+	if( $(".insertable").length <= 0 ){
+		if( $(".swappable").length > 0 ){
+			return
+		}
+
+		//Add class "insertable" so we know they can do things.
+		$(".stream").addClass("insertable");
+		$("#insertExplanation").show();
+		$("#swap").addClass("disabledText");
+		
+		//Bind a click event to all swappable divs
+		$(".insertable").on("click.inserting", function(b){
+			//Only fire on mouse1
+			if( b.which == 1 ){
+				//If there's not already a selected div (class "insert1") then set this to "insert1"
+				//	else, insert "insert1" before the clicked div
+				
+				if( $(".insert1").length <= 0 ){
+					$(this).addClass("insert1"); //CSS makes it 1px white border for attention
+				} else {
+					//Get the ID of first-clicked div and this div
+					var id1 = $(".insert1").prop("id");
+					var id2 = $(this).prop("id");
+					
+					if( id1 < id2 ){
+						console.log("<");
+						for( var j = Number.parseInt(id1); j <= id2; j++ ) {
+							//Make copies of the two divs with swapped IDs
+							var clone1 = $("#"+j).clone(true).prop("id", j+1);
+							var clone2 = $("#"+(j+1)).clone(true).prop("id", j);
+							
+							//Set the IDs on the divs to mark them for swapping
+							$("#"+j).prop("id","i1");
+							$("#"+(j+1)).prop("id","i2");
+							
+							//Replace the divs with the updated clones
+							$("#i1").replaceWith(clone2);
+							$("#i2").replaceWith(clone1);
+							
+							//Swap the streams in the array for saving later
+							var temp = watchedStreams[j+1];
+							watchedStreams[j+1] = watchedStreams[j];
+							watchedStreams[j] = temp;
+						}
+
+						if( sorting ){
+							sortLiveStreams()
+						}
+						
+						$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+						
+						//Remove ".insert1" from all divs with that class since a swap was made
+						$(".insert1").removeClass("insert1");
+						
+					} else if( id1 > id2 ){
+						for( var j = Number.parseInt(id1); j > id2; j-- ) {
+							//Make copies of the two divs with swapped IDs
+							var clone1 = $("#"+j).clone(true).prop("id", j-1);
+							var clone2 = $("#"+(j-1)).clone(true).prop("id", j);
+							
+							//Set the IDs on the divs to mark them for swapping
+							$("#"+j).prop("id","i1");
+							$("#"+(j-1)).prop("id","i2");
+							
+							//Replace the divs with the updated clones
+							$("#i1").replaceWith(clone2);
+							$("#i2").replaceWith(clone1);
+							
+							//Swap the streams in the array for saving later
+							var temp = watchedStreams[j-1];
+							watchedStreams[j-1] = watchedStreams[j];
+							watchedStreams[j] = temp;
+						}
+
+						if( sorting ){
+							sortLiveStreams();
+						}
+						
+						$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
+
+						//Remove ".insert1" from all divs with that class since a swap was made
+						$(".insert1").removeClass("insert1");
+					} else {
+						//Clicked on same stream, maybe they don't want to sort
+						$(".insert1").removeClass("insert1");
+					}
+					
+				}
+			}
+		});
+	} else {
+		$(".insertable").unbind("click.inserting");
+		$(".insertable").removeClass("insertable");
+		$(".insert1").removeClass("insert1");
+		$("#insertExplanation").hide();
+		$("#swap").removeClass("disabledText");
+	}
+}
+
+//Check if stream list is sorted or not and do the opposite
 function toggleSorting() {
     if( $("#sortLiveCheck").is(":disabled") && !$("#sortLiveCheck").is(":checked")) {
         return;
@@ -1053,34 +1152,6 @@ function doubleClick(divID) {
 	}
 }
 
-function enablePB() {
-	$("#enablePushB").hide();
-	$("#disablePushB").show();
-	$("#testPushB").show();
-	$("#accessToken").attr('readonly',true).toggleClass("disabledText");
-	$("#deviceID").attr('readonly',true).toggleClass("disabledText");
-	if( $("#savePB").is(':checked') ){
-		$.cookie("pushBullet", $("#accessToken").val() + ";" + $("#deviceID").val(), { expires: 30 });
-	}
-	$("#savePBdiv").hide();
-	$("#delPBdiv").show();
-}
-
-function disablePB() {
-	$("#enablePushB").show();
-	$("#disablePushB").hide();
-	$("#testPushB").hide();
-	$("#accessToken").attr('readonly',false).toggleClass("disabledText");
-	$("#deviceID").attr('readonly',false).toggleClass("disabledText");
-	if( $("#delPB").is(":checked") ){
-		if($.cookie("pushBullet")){
-			$.removeCookie("pushBullet", null);
-		}
-	}
-	$("#savePBdiv").show();
-	$("#delPBdiv").hide();
-}
-
 $(document).ready(function(){
 	//Load the cookie and process from there.
 	processCookies();
@@ -1117,8 +1188,13 @@ $(document).ready(function(){
 });
 </script>
 <div id=streamArea></div>
-<div id=controls><div id=rearrange onclick="editMode();">Rearrange</div><div id=toggleList onclick="toggleList();">List Mode</div></div>
-<span id=rearrangeExplanation>Click two divs to swap them, click "Rearrange" again to quit</span>
+<div id=controls>
+	<div id=swap onclick="swapMode();">Swap</div>
+	<div id=insert onclick="insertMode();">Insert</div>
+	<div id=toggleList onclick="toggleList();">List Mode</div>
+</div>
+<span id=swapExplanation>Click two streams to swap them, click "Swap" to quit</span>
+<span id=insertExplanation>Click two streams to move the first stream in front of the second stream, click "Insert" to quit</span>
 <br />
 <form id="checkForm">
 Enter a stream name and select a site to check its status:<br />(or to remove from the list above)<br />
@@ -1132,24 +1208,12 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
 <div id="favCheckDiv" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
 <div id="sortLive" onclick="toggleSorting();"><input type="checkbox" name="sorting" id="sortLiveCheck"/>Sort Live Streams</div>
+<br />
 List of streams is saved in cookies.<br />
 
 <strong>Double click</strong> the colored box to open a popup for the stream.<br />
 If the description is too long, mouseover the box for a tooltip.<br />
-Currently, can only rearrange streams when they're unsorted.<br />
-<br /><!--
-    * Disabled PushBullet due to new 100-push automated limit, plus vague reports of not working.
-    
-(Optional) Enter a <a href="https://www.pushbullet.com/">PushBullet</a> access token to get alerts when streams go live.<br />
-Device ID is optional. Leaving it blank will send to all devices.<br />
-&nbsp; Token: &nbsp; &nbsp; <input type="text" name="accessToken" value="" id="accessToken" /> (Found <a href="https://www.pushbullet.com/account">here</a> if logged in)<br />
-Device ID: <input type="text" name="deviceID" value="" id="deviceID" />
-<input type="button" value="Enable PushBullet" id="enablePushB" onclick="enablePB();" />
-<input type="button" value="Disable PushBullet" id="disablePushB" onclick="disablePB();" />
-<input type="button" value="Test PushBullet" id="testPushB" onclick="sendAlert('Test Notification', 'einSynd.pw', 'This is a test notification sent from einSynd.pw');" /><br />
-<div id="savePBdiv"><input type="checkbox" value="y" name="savePB" id="savePB" checked />Save Info To Cookie When Enabling</div>
-<div id="delPBdiv"><input type="checkbox" value="y" name="delPB" id="delPB" checked />Delete Cookie When Disabling</div><br />
--->
+<br />
 </form>
 </body>
 </html>
