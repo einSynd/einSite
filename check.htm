@@ -32,7 +32,7 @@
 #streamArea { margin: 0; }
 body { margin: 0; }
 
-#controls {
+.controls {
 	width: 100%;
 	margin: 0;
 	padding: 0;
@@ -40,16 +40,23 @@ body { margin: 0; }
 	display: flex;
 }
 
-#toggleList, #swap, #insert {
+#controls_top {
+	margin-bottom: 2px;
+}
+
+#controls_bottom {
+	margin-top: 2px;
+}
+
+.toggleList, .swap, .insert {
 	border: 1px solid #000;
 	width: 50%;
 	text-align: center;
-	margin: 2 0 0 0;
 	padding: 0;
 	box-sizing: border-box;
 }
 
-#swap, #insert {
+.swap, .insert {
 	width: 25%;
 }
 
@@ -925,7 +932,7 @@ function swapMode() {
 		//Add class "swappable" so we know they can do things.
 		$(".stream").addClass("swappable");
 		$("#swapExplanation").show();
-		$("#insert").addClass("disabledText");
+		$(".insert").addClass("disabledText");
 		
 		
 		//Bind a click event to all swappable divs
@@ -976,7 +983,7 @@ function swapMode() {
 		$(".swappable").removeClass("swappable");
 		$(".swap1").removeClass("swap1");
 		$("#swapExplanation").hide();
-		$("#insert").removeClass("disabledText");
+		$(".insert").removeClass("disabledText");
 	}
 }
 
@@ -992,7 +999,7 @@ function insertMode() {
 		//Add class "insertable" so we know they can do things.
 		$(".stream").addClass("insertable");
 		$("#insertExplanation").show();
-		$("#swap").addClass("disabledText");
+		$(".swap").addClass("disabledText");
 		
 		//Bind a click event to all swappable divs
 		$(".insertable").on("click.inserting", function(b){
@@ -1079,7 +1086,7 @@ function insertMode() {
 		$(".insertable").removeClass("insertable");
 		$(".insert1").removeClass("insert1");
 		$("#insertExplanation").hide();
-		$("#swap").removeClass("disabledText");
+		$(".swap").removeClass("disabledText");
 	}
 }
 
@@ -1187,14 +1194,19 @@ $(document).ready(function(){
 	$("form").submit(function(event) {event.preventDefault();});
 });
 </script>
-<div id=streamArea></div>
-<div id=controls>
-	<div id=swap onclick="swapMode();">Swap</div>
-	<div id=insert onclick="insertMode();">Insert</div>
-	<div id=toggleList onclick="toggleList();">List Mode</div>
+<div id=controls_top class=controls>
+	<div class=swap onclick="swapMode();">Swap</div>
+	<div class=insert onclick="insertMode();">Insert</div>
+	<div class=toggleList onclick="toggleList();">List Mode</div>
 </div>
-<span id=swapExplanation>Click two streams to swap them, click "Swap" to quit</span>
-<span id=insertExplanation>Click two streams to move the first stream in front of the second stream, click "Insert" to quit</span>
+<div id=streamArea></div>
+<div id=controls_bottom class=controls>
+	<div class=swap onclick="swapMode();">Swap</div>
+	<div class=insert onclick="insertMode();">Insert</div>
+	<div class=toggleList onclick="toggleList();">List Mode</div>
+</div>
+<span id=swapExplanation>Click two streams to swap them. Click "Swap" to quit</span>
+<span id=insertExplanation>Click a stream to move, then the stream to put it in front of. Click "Insert" to quit</span>
 <br />
 <form id="checkForm">
 Enter a stream name and select a site to check its status:<br />(or to remove from the list above)<br />
