@@ -1016,8 +1016,7 @@ function insertMode() {
 					var id2 = $(this).prop("id");
 					
 					if( id1 < id2 ){
-						console.log("<");
-						for( var j = Number.parseInt(id1); j <= id2; j++ ) {
+						for( var j = Number.parseInt(id1); j < id2-1; j++ ) {
 							//Make copies of the two divs with swapped IDs
 							var clone1 = $("#"+j).clone(true).prop("id", j+1);
 							var clone2 = $("#"+(j+1)).clone(true).prop("id", j);
