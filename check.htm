@@ -897,7 +897,7 @@ function removeStream(){
 		
 		if( curStream.toLowerCase() == stream.toLowerCase() ){
 			if( curSite.toLowerCase() == site.toLowerCase() ){
-				//	console.log("Matched at #" + $(this).prop("id"));
+				//	console.log("Matched at #" + id);
 				$("#"+id).remove();
 				watchedStreams.splice(id, 1);
 				removed = true;
@@ -908,9 +908,11 @@ function removeStream(){
 	
 	//If a stream was removed, re-order the divs and set the cookie
 	if( removed == true ) {
+		unsortLiveStreams();
 		$.each($(".stream"), function(num) {
 			$(this).prop("id", num);
 		});
+		sortLiveStreams();
 		
 		//Set the cookie so it stays gone.
 		$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
