@@ -888,7 +888,7 @@ function removeStreamNum(streamNum){
 function removeStream(){
 	var stream = $('#checkStream').val();
 	var site = $('#site').val();
-	var removed = false;
+	var removed = -1;
 	
 	//Loop through the watchedStreams array to check for matching info
 	$.each(watchedStreams, function(id,obj) {
@@ -900,20 +900,19 @@ function removeStream(){
 				//	console.log("Matched at #" + id);
 				$("#"+id).remove();
 				watchedStreams.splice(id, 1);
-				removed = true;
+				removed = id;
 				return false;			
 			}
 		} 
 	});
 	
 	//If a stream was removed, re-order the divs and set the cookie
-	if( removed == true ) {
-		unsortLiveStreams();
-		$.each($(".stream"), function(num) {
-			$(this).prop("id", num);
-		});
-		sortLiveStreams();
-		
+	if( removed != -1 ) {
+		//Loop over the divs after the one removed and subtract their ID by one to properly match array
+		for(var i = removed + 1; i <= watchedStreams.length; i++){
+			$("#"+i).attr("id", i - 1);
+		}
+
 		//Set the cookie so it stays gone.
 		$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
 	} else {
