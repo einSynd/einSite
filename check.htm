@@ -48,7 +48,7 @@ body { margin: 0; }
 	margin-top: 2px;
 }
 
-.toggleList, .swap, .insert {
+.showOptions, .swap, .insert {
 	border: 1px solid #000;
 	width: 50%;
 	text-align: center;
@@ -59,6 +59,61 @@ body { margin: 0; }
 .swap, .insert {
 	width: 25%;
 }
+
+#options {
+	display: none;
+	position: fixed;
+	width: 50vw;
+	height: 50vh;
+	top: 15vh;
+	left: 25vw;
+	max-width: 550px;
+    min-width: 325px;
+	max-height: 175px;
+	border: 1px solid #000;
+	background-color: #999999;
+  z-index: 10;
+}
+
+@media screen and (max-width: 600px){
+	#options {
+		left: 15vw;
+	}
+}
+
+#closeOpX {
+	position: relative;
+	float: right;
+	border: 0 0 0 3;
+	height: 18px;
+	width: 18px;
+	text-align: center;
+	border-left: 1px solid #000;
+	border-bottom: 1px solid #000;
+  opacity: 1;
+}
+
+#optionsList{
+	display: flex;
+	flex-flow: row wrap;
+}
+
+.anOption {
+	border: 1px solid #000;
+	width: 48%;
+	margin: 2px;
+}
+
+#overlay {
+  z-index: 2;
+  display: none;
+  background: #000;
+  opacity: 0.6;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+} 
 
 #swapExplanation, #insertExplanation { display: none; } 
 #disablePushB, #testPushB { display: none; }
@@ -72,17 +127,17 @@ body { margin: 0; }
 }
 .favicon { float: left; }
 #dropdownIcon { display: inline-block; height: 14px; }
-#favCheckDiv { width: 120px; }
 .nowrap { display: inline-block; white-space: nowrap; }
 
 .info { background: orange; }
 .live { background: green; }
 .rerun { background: #990; }
 .offline { background: red; }
+body { background-color: #999999; }
 
 </style>
 </head>
-<body bgcolor="#99999">
+<body>
 <script type="text/javascript">
 var watchedStreams = [ ];
 var listMode = false;
@@ -923,6 +978,9 @@ function removeStream(){
 //Allow swapping of streams
 //	Click two streams to swap the two
 function swapMode() {
+	if( $(".stream").length <= 1 ) {
+		return
+	}
 	//If class "swappable" isn't on anything, turn on edit mode, else turn off.
 	if( $(".swappable").length <= 0 ){
 		//Ignore it if they're already in insert mode
@@ -991,6 +1049,9 @@ function swapMode() {
 //Allow insertion sorting of streams
 //	Click two streams, first stream gets put directly in front of second stream
 function insertMode() {
+	if( $(".stream").length <= 1 ) {
+		return
+	}
 	//If class "insertable" isn't on anything, turn on edit mode, otherwise turn off
 	if( $(".insertable").length <= 0 ){
 		if( $(".swappable").length > 0 ){
@@ -1139,6 +1200,7 @@ function toggleList() {
 		$(".list").addClass("box").removeClass("list");
 		listMode = false;
 	}
+	$("#listModeCheck").prop("checked", listMode);
 	
 	$.cookie("listMode", listMode, { expires: 30 });
 }
@@ -1157,6 +1219,24 @@ function doubleClick(divID) {
     } else {
 		makePopup(stream + "," + site);
 	}
+}
+
+function escClose(e){
+	if(e.key == "Escape") {
+		closeOptions();
+	}
+}
+
+function closeOptions(){
+  $("#overlay").hide();
+	$("#options").hide();
+	$(document).off("keydown", escClose);
+}
+
+function showOptions() {
+  $("#overlay").show();
+	$("#options").show();
+	$(document).on("keydown", escClose)
 }
 
 $(document).ready(function(){
@@ -1189,21 +1269,25 @@ $(document).ready(function(){
     if( $("#sortLiveCheck").is(":checked") ){
         setTimeout(sortLiveStreams, 300);
     }
-    
+	
 	//Don't actually do anything when the forms are used, just run scripts.
-	$("form").submit(function(event) {event.preventDefault();});
+	$("form").submit(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  });
 });
 </script>
 <div id=controls_top class=controls>
 	<div class=swap onclick="swapMode();">Swap</div>
 	<div class=insert onclick="insertMode();">Insert</div>
-	<div class=toggleList onclick="toggleList();">List Mode</div>
+	<div class=showOptions onclick="showOptions();">Options</div>
 </div>
 <div id=streamArea></div>
 <div id=controls_bottom class=controls>
 	<div class=swap onclick="swapMode();">Swap</div>
 	<div class=insert onclick="insertMode();">Insert</div>
-	<div class=toggleList onclick="toggleList();">List Mode</div>
+	<div class=showOptions onclick="showOptions();">Options</div>
 </div>
 <span id=swapExplanation>Click two streams to swap them. Click "Swap" to quit</span>
 <span id=insertExplanation>Click a stream to move, then the stream to put it in front of. Click "Insert" to quit</span>
@@ -1218,8 +1302,6 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 </select><div id="dropdownIcon"></div><br />
 <input type="submit" value="Check Status" name="submit" id="submit" onclick="addStream();" />
 <input type="button" value="Remove From List" name="remove" id="remove" onclick="removeStream();" /> <br />
-<div id="favCheckDiv" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
-<div id="sortLive" onclick="toggleSorting();"><input type="checkbox" name="sorting" id="sortLiveCheck"/>Sort Live Streams</div>
 <br />
 List of streams is saved in cookies.<br />
 
@@ -1227,5 +1309,13 @@ List of streams is saved in cookies.<br />
 If the description is too long, mouseover the box for a tooltip.<br />
 <br />
 </form>
+<div id="overlay" onclick="closeOptions();"></div>
+<div id="options">
+<div id="closeOpX" onclick="closeOptions();">X</div>
+<div id="optionsList">
+<div class="anOption" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
+<div class="anOption" onclick="toggleSorting();"><input type="checkbox" name="sorting" id="sortLiveCheck"/>Sort Live Streams</div>
+<div class="anOption" onclick="toggleList();"><input type="checkbox" name="listModeCheck" id="listModeCheck"/>List Mode</div>
+</div></div>
 </body>
 </html>
