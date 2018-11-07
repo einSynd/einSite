@@ -564,7 +564,7 @@ $(document).ready(function(){
 		var siteTo = $("#siteTo").val();
 		var which = $("#which").val();
 		
-		changeStream(changeTo, siteTo, which)
+		changeStream(changeTo, siteTo, 0, which)
 		changeDialog.dialog("close");
 		
 		e.preventDefault();
