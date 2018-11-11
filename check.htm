@@ -141,7 +141,7 @@ body { background-color: #999999; }
 <script type="text/javascript">
 var watchedStreams = [ ];
 var listMode = false;
-var host = "http://" + window.location.host;
+var host = "//" + window.location.host;
 var favicons = true;
 var sorting = false;
 var jqXHRGlobal = "";
@@ -337,7 +337,7 @@ function checkStream(toCheck){
 		return $.ajax({
             type: 'GET',
 			//url: 'http://einsynd.pw/ustreamAPI.php?stream=' + streamID,
-            url: "http://api.ustream.tv/channels/" + streamID + ".json",
+            url: "//api.ustream.tv/channels/" + streamID + ".json",
 			timeout: 10000,
 			success: function(data) { handleUStream(data, toCheck); },
 			error: errorHandler,
@@ -349,7 +349,7 @@ function checkStream(toCheck){
 	} else if(site == "sma"){
 		return $.ajax({
 			type: 'GET',
-            url: 'http://www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
+            url: '//www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
 			timeout: 10000,
 			success: function(data) { handleSmashcast(data, toCheck); },
 			error: errorHandler,
@@ -734,7 +734,7 @@ function sendAlert(stream, site, status){
 		body = status;
 		toSend = {'token': $("#accessToken").val(), 'device': $("#deviceID").val(), 'title': title, 'body': body};
 		$.ajax({
-			url: 'http://einsynd.pw/pushBullet.php',
+			url: '//einsynd.pw/pushBullet.php',
 			type: 'POST',
 			data: toSend,
 			error: function(a,b,c) { console.log(b + ": " + c); }
@@ -902,7 +902,7 @@ function getUstreamID(stream, streamNum){
     var tempObj = watchedStreams[streamNum];
 
     $.ajax({
-        url: 'http://einsynd.pw/ustreamID.php?stream=' + stream,
+        url: '//einsynd.pw/ustreamID.php?stream=' + stream,
         dataType: "jsonp",
         jsonp: "callback",
         success: function(data){
