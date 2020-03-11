@@ -509,7 +509,7 @@ function handleTwitch(data, toCheck) {
 			var link = "<a href='"+data.channel.url+"' target='_blank'>";
             var game = (data.game != null) ? " - " + data.game : "";
 			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game);
-            if( data.stream_type == "live"){
+            if( data.stream_type == "live" || data.channel.status.indexOf("↪ Rerun") == -1){
                 setLiveStatus(divID, "live");
             } else {
                 setLiveStatus(divID, "rerun");
@@ -767,6 +767,11 @@ function handleMassTwitch(data, twitchStreams){
         var game = (response.game != null) ? " - " + response.game : "";
         thisStream.status = nowrap + favicon + link + thisStream.name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
         
+		//Twitch removed the "rerun" status, now have to detect it from stream status
+		if( response.channel.status.indexOf("↪ Rerun") > -1 ) {
+			twitchType = "rerun";
+		}
+		
         //Change the "game" to fit better for a tooltip
         game = (response.game != null) ? " [" + response.game + "]" : "";
         thisStream.tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
@@ -1376,7 +1381,7 @@ $(document).ready(function(){
 	$("#site").change(); //Auto-trigger it to set up the first one.
 	
 	//Set a timer to do automatic checks.
-	setInterval(prepareCheck, 120000); //120,000 milliseconds = 120 seconds = 2 minutes.
+	setInterval(prepareCheck, 60000); //60,000 milliseconds = 60 seconds
     
     if( $("#sortLiveCheck").is(":checked") ){
         setTimeout(sortLiveStreams, 300);
