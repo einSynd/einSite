@@ -16,7 +16,7 @@ function doCall(){
     
     var headerInfo = {"Client-ID": token};
     
-    if( api == "kraken" ) {
+    if( apiType == "kraken" ) {
         var version = $("#version option:selected").val();
         headerInfo["Accept"] = "application/vnd.twitchtv."+version+"+json";
     } else {
