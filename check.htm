@@ -451,6 +451,14 @@ function checkStream(toCheck){
 			error: errorHandler,
 			statusCode: statusCodeHandler
         });
+	} else if(site == "ath") {
+		return $.ajax({
+			url: 'https://api.angelthump.com/v1/' + stream,
+            timeout: 10000,
+            success: function(data) { handleAngelthump(data, toCheck); },
+			error: errorHandler,
+			statusCode: statusCodeHandler
+		});
 	} else if(site == "jtv"){
 		$("#"+toCheck).html(getFavicon(site) + stream + ": Justin.TV has closed.").addclass("offline");
 	} else {
@@ -657,6 +665,26 @@ function handleMixer(data, toCheck){
         $(divID).html(getFavicon(site) + stream + ": Offline");
         setLiveStatus(divID, "offline");
     }
+}
+
+function handleAngelthump(data, toCheck){
+	console.log(data);
+	console.log(toCheck);
+	var divID = "#" + toCheck;
+	var tempObj = watchedStreams[toCheck];
+	var stream = tempObj.stream;
+	var site = tempObj.site;
+	var wasLive = tempObj.wasLive;
+	
+	if( data.live == true ){
+		var link = "<a href='//angelthump.com/" + stream + "' target='_blank'>";
+		
+		$(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewers + "v] is live! ");
+        setLiveStatus(divID, "live");
+	} else {
+		$(divID).html(getFavicon(site) + stream + ": Offline");
+        setLiveStatus(divID, "offline");
+	}
 }
 
 //Handle errors that are thrown in a bit of a generic error.
@@ -1414,7 +1442,7 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="text" name="checkStream" value="" id="checkStream" />
 <select name="site" id="site">
 	<option value="ttv" selected>Twitch.TV</option><option value="sma">Smashcast</option>
-    <option value="mxr">Mixer</option>
+    <option value="mxr">Mixer</option><option value="ath">Angelthump</option>
 	<option value="utv">UStream</option><option value="lst">Livestream</option>
 </select><div id="dropdownIcon"></div><br />
 <input type="submit" value="Check Status" name="submit" id="submit" onclick="addStream();" />
