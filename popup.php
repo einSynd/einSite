@@ -311,7 +311,7 @@ Stream 1: &nbsp;&nbsp;<input type="text" name="s1" value="<?php echo $txt1; ?>" 
 <select name="s1s" id="s1s">
 <option value="ttv" <?php if($streams["stream1site"]=="ttv"){ echo 'selected';} ?>>Twitch.TV</option>
 <option value="lst" <?php if($streams["stream1site"]=="lst"){ echo 'selected';} ?>>Livestream</option>
-<option value="utv" <?php if($streams["stream1site"]=="utv"){ echo 'selected';} ?>>UStream</option>
+<option value="ath" <?php if($streams["stream1site"]=="ath"){ echo 'selected';} ?>>Angelthump</option>
 <option value="sma" <?php if($streams["stream1site"]=="sma"){ echo 'selected';} ?>>Smashcast.TV</option>
 <!--<option value="cas" <?php if($streams["stream1site"]=="cas"){ echo 'selected';} ?>>ConnectCast</option>-->
 <option value="mxr" <?php if($streams["stream1site"]=="mxr"){ echo 'selected';} ?>>Mixer</option>
@@ -324,7 +324,7 @@ Stream 2: &nbsp;&nbsp;<input type="text" name="s2" value="<?php echo $txt2; ?>" 
 <select name="s2s" id="s2s">
 <option value="ttv" <?php if($streams["stream2site"]=="ttv"){ echo 'selected';} ?>>Twitch.TV</option>
 <option value="lst" <?php if($streams["stream2site"]=="lst"){ echo 'selected';} ?>>Livestream</option>
-<option value="utv" <?php if($streams["stream2site"]=="utv"){ echo 'selected';} ?>>UStream</option>
+<option value="ath" <?php if($streams["stream2site"]=="ath"){ echo 'selected';} ?>>Angelthump</option>
 <option value="sma" <?php if($streams["stream2site"]=="sma"){ echo 'selected';} ?>>Smashcast.TV</option>
 <!--<option value="cas" <?php if($streams["stream2site"]=="cas"){ echo 'selected';} ?>>ConnectCast</option>-->
 <option value="mxr" <?php if($streams["stream2site"]=="mxr"){ echo 'selected';} ?>>Mixer</option>

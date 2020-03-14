@@ -340,7 +340,9 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src='https://mixer.com/embed/player/"+streamToMake+"'></iframe>");
         } else if(makeSite=="rec") {
             $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.twitch.tv/?video="+streamToMake+"></iframe>");
-        }
+        } else if(makeSite=="ath") {
+			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.angelthump.com/?channel="+streamToMake+"></iframe>");
+		}
 		
 		//Make it visible, tell it not to use SWFObject below
 		$("#stream"+whatDiv).css("visibility","visible");
