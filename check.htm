@@ -1382,6 +1382,13 @@ function colorReset(status){
 	saveColors();
 }
 
+//Prevent double click from highlighting text
+document.addEventListener('mousedown', function (event) {
+  if (event.detail > 1) {
+    event.preventDefault();
+  }
+}, false);
+
 $(document).ready(function(){
 	//Load the cookie and process from there.
 	processCookies();
