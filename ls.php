@@ -282,7 +282,8 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 		allowFullScreen: "true", 
 		allowScriptAccess: "always", 
 		allowNetworking: "all", 
-		movie: "http://www.twitch.tv/widgets/live_embed_player.swf"
+		movie: "http://www.twitch.tv/widgets/live_embed_player.swf",
+		parent: "einsynd.pw"
 	};
 		
 	var ttv  = "http://www.twitch.tv/widgets/live_embed_player.swf";
@@ -320,29 +321,30 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 			$("#stream"+whatDiv).empty();
 		}
 		
+		standardSettings=" width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen ";
 		//Add the appropriate IFrame to the div
 		if(makeSite=="vee") {
 			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency=true src=http://www.veemi.com/embed.php?v="+streamToMake+"&vw=100%&vh=100%&domain=einsynd.pw></iframe>");
         }
         else if(makeSite=="utv") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://www.ustream.tv/embed/"+streamToMake+"?html5ui></iframe>");    
+            $("#stream"+whatDiv).append("<iframe "+standardSettings+" src=http://www.ustream.tv/embed/"+streamToMake+"?html5ui></iframe>");    
 		} else if(makeSite=="sma") {
-			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen src=//www.smashcast.tv/#!/embed/"+streamToMake+"?autoplay=true></iframe>");
+			$("#stream"+whatDiv).append("<iframe "+standardSettings+" src=//www.smashcast.tv/#!/embed/"+streamToMake+"?autoplay=true></iframe>");
 		} else if(makeSite=="you") {
-			$("#stream"+whatDiv).append("<iframe id='youframe' width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen autoplay src=//www.youtube.com/embed/"+streamToMake+"?autoplay=1></iframe>");
+			$("#stream"+whatDiv).append("<iframe id='youframe' "+standardSettings+" src=//www.youtube.com/embed/"+streamToMake+"?autoplay=1></iframe>");
 		} else if(makeSite=="ypl") {
-			$("#stream"+whatDiv).append("<iframe id='youframe' width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen autoplay src=https://www.youtube.com/embed/videoseries?list="+streamToMake+"></iframe>");
-		} else if(makeSite=="ttv") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.twitch.tv/?volume=1&channel="+streamToMake+"></iframe>");
-        } else if(makeSite=="cas") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src=http://connectcast.tv/popout/live/"+streamToMake+"></iframe>");
+			$("#stream"+whatDiv).append("<iframe id='youframe' "+standardSettings+" src=https://www.youtube.com/embed/videoseries?list="+streamToMake+"></iframe>");
+		} else if(makeSite=="cas") {
+            $("#stream"+whatDiv).append("<iframe "+standardSettings+" src=http://connectcast.tv/popout/live/"+streamToMake+"></iframe>");
         } else if(makeSite=="mxr") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play webkitallowfullscreen src='https://mixer.com/embed/player/"+streamToMake+"'></iframe>");
+            $("#stream"+whatDiv).append("<iframe "+standardSettings+" src='https://mixer.com/embed/player/"+streamToMake+"'></iframe>");
         } else if(makeSite=="rec") {
-            $("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.twitch.tv/?video="+streamToMake+"></iframe>");
+            $("#stream"+whatDiv).append("<iframe "+standardSettings+" src=//player.twitch.tv/?video="+streamToMake+"></iframe>");
         } else if(makeSite=="ath") {
-			$("#stream"+whatDiv).append("<iframe width=100% height=100% scrolling=no frameborder=0 allowtransparency allowfullscreen auto_play src=//player.angelthump.com/?channel="+streamToMake+"></iframe>");
-		}
+			$("#stream"+whatDiv).append("<iframe "+standardSettings+" src=//player.angelthump.com/?channel="+streamToMake+"></iframe>");
+		} else if(makeSite=="ttv") {
+            $("#stream"+whatDiv).append("<iframe "+standardSettings+" src=https://player.twitch.tv/?channel="+streamToMake+"&volume=1&parent=einsynd.pw&parent=dev.einsynd.pw></iframe>");
+        }
 		
 		//Make it visible, tell it not to use SWFObject below
 		$("#stream"+whatDiv).css("visibility","visible");

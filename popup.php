@@ -78,7 +78,7 @@
 var needsUStream = 0;
 var str1 = "";
 var str2 = "";
-var host = "http://" + window.location.host;
+var host = "//" + window.location.host;
 
 //Add some custom stream handlers to access in parseStreams
 var sda = ["GamesDoneQuick","ttv"];
@@ -172,7 +172,7 @@ function makePopup() {
     var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 10;
     var top = (window.screenY != 'undefined' ? window.screenY : window.screenTop) + 200;
 	var pathname = window.location.pathname;
-	var host = "http://"+window.location.host;
+	var host = "//"+window.location.host;
 	
 	if (pathname.indexOf("/dev/") > -1 || pathname.indexOf("/development/") > -1) {
 		host = host + "/development"; }
@@ -265,7 +265,7 @@ function getUStreamID(stream, streamNum) {
 	
 	if(!intRegex.test(stream)) {
 		$.ajax({
-			url: 'http://einsynd.pw/ustreamID.php?stream=' + stream,
+			url: '//einsynd.pw/ustreamID.php?stream=' + stream,
 			dataType: "jsonp",
             jsonp: "callback",
 			success: function(data){
@@ -315,6 +315,7 @@ Stream 1: &nbsp;&nbsp;<input type="text" name="s1" value="<?php echo $txt1; ?>" 
 <option value="sma" <?php if($streams["stream1site"]=="sma"){ echo 'selected';} ?>>Smashcast.TV</option>
 <!--<option value="cas" <?php if($streams["stream1site"]=="cas"){ echo 'selected';} ?>>ConnectCast</option>-->
 <option value="mxr" <?php if($streams["stream1site"]=="mxr"){ echo 'selected';} ?>>Mixer</option>
+<option value="utv" <?php if($streams["stream1site"]=="utv"){ echo 'selected';} ?>>Ustream.TV</option>
 <option value="you" <?php if($streams["stream1site"]=="you"){ echo 'selected';} ?>>Youtube</option>
 <option value="ypl" <?php if($streams["stream1site"]=="ypl"){ echo 'selected';} ?>>Youtube (Playlist)</option>
 </select><div id="dropdownIcon1"></div>
@@ -328,6 +329,7 @@ Stream 2: &nbsp;&nbsp;<input type="text" name="s2" value="<?php echo $txt2; ?>" 
 <option value="sma" <?php if($streams["stream2site"]=="sma"){ echo 'selected';} ?>>Smashcast.TV</option>
 <!--<option value="cas" <?php if($streams["stream2site"]=="cas"){ echo 'selected';} ?>>ConnectCast</option>-->
 <option value="mxr" <?php if($streams["stream2site"]=="mxr"){ echo 'selected';} ?>>Mixer</option>
+<option value="utv" <?php if($streams["stream2site"]=="utv"){ echo 'selected';} ?>>Ustream.TV</option>
 <option value="you" <?php if($streams["stream2site"]=="you"){ echo 'selected';} ?>>Youtube</option>
 <option value="ypl" <?php if($streams["stream2site"]=="ypl"){ echo 'selected';} ?>>Youtube (Playlist)</option>
 </select><div id="dropdownIcon2"></div>
