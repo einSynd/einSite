@@ -374,6 +374,19 @@ function makePopup(stream) {
 	window.open(host + "/ls.php?s="+stream, stream.split(",")[0], windowFeatures);
 }
 
+//Twitch changed their embeds to require SSL, so just launch their popout window URL I guess
+function makeTwitchPopup(stream) {
+    var width = 640;
+    var height = 360;
+    var left = (window.screenX != 'undefined' ? window.screenX : window.screenLeft) - 50;
+    var top = (window.screenY != 'undefined' ? window.screenY : window.screenTop) + 200;
+	var windowFeatures = ",menubar=no,toolbar=no,scrollbars=no,resizable=yes," +
+            "left=" + left + ",top=" + top + "screenX=" + left + ",screenY=" + top;
+
+	windowFeatures = "width=" + width + ",height=" + height + windowFeatures;
+	window.open("https://player.twitch.tv/?channel="+stream+"&muted=false&parent=dev.einsynd.pw&player=popout&volume=1", stream.split(",")[0], windowFeatures);
+}
+
 //Make API calls to check if stream's live
 function checkStream(toCheck){
 	var tempObj = watchedStreams[toCheck];
@@ -453,7 +466,7 @@ function checkStream(toCheck){
         });
 	} else if(site == "ath") {
 		return $.ajax({
-			url: 'https://api.angelthump.com/v1/' + stream,
+			url: 'https://api.angelthump.com/v2/streams/' + stream,
             timeout: 10000,
             success: function(data) { handleAngelthump(data, toCheck); },
 			error: errorHandler,
@@ -674,10 +687,10 @@ function handleAngelthump(data, toCheck){
 	var site = tempObj.site;
 	var wasLive = tempObj.wasLive;
 	
-	if( data.live == true ){
+	if( data.type == "live" ){
 		var link = "<a href='//angelthump.com/" + stream + "' target='_blank'>";
 		
-		$(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewers + "v] is live! ");
+		$(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewer_count + "v]:" + data.user.title);
         setLiveStatus(divID, "live");
 	} else {
 		$(divID).html(getFavicon(site) + stream + ": Offline");
@@ -1319,8 +1332,13 @@ function doubleClick(divID) {
 	var stream = watchedStreams[tempID].stream;
 	var streamID = watchedStreams[tempID].streamID;
 	var site = watchedStreams[tempID].site;
+	var twitchPopout="false";
 	
 	if( site == "jtv" ){ return false; }
+	if( site == "ttv" && twitchPopout== "true"){
+		makeTwitchPopup(stream);
+		return false;
+	}
 	
 	if( streamID > 0 ){
 		makePopup(stream + ":" + streamID + "," + site);
