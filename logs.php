@@ -93,7 +93,7 @@ function changeColor(bgColor){
 }
 
 function fileCheck(date, first){
-    if(date==""){ date="today"; }
+    if(date==""){ date="2018-06-27"; }
     //Get today minus five hours because GMT-5
     var today = new Date();
     today.setTime(today.getTime() - 5 * 60 * 60 * 1000);
@@ -136,7 +136,7 @@ function fileCheck(date, first){
         var anchored = Autolinker.link(data);
         $("#content").html(anchored);
         
-        if(date == today){
+        if(date == "2018-06-27"){
             $("#dateUp").prop("disabled",true);
         } else {
             $("#dateUp").prop("disabled",false);
@@ -154,7 +154,7 @@ function fileCheck(date, first){
         }
         
     }).fail(function() { 
-        $("#content").html("There is no log for this date. Current earliest is 2010-02-22, latest is 2017-06-02.");
+        $("#content").html("There is no log for this date. Current earliest is 2014-05-15, last log is 2018-06-27.");
     })
 }
 
