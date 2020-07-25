@@ -336,8 +336,6 @@ function makeStream(streamToMake, makeSite, whatDiv, size) {
 			$("#stream"+whatDiv).append("<iframe id='youframe' "+standardSettings+" src=https://www.youtube.com/embed/videoseries?list="+streamToMake+"></iframe>");
 		} else if(makeSite=="cas") {
             $("#stream"+whatDiv).append("<iframe "+standardSettings+" src=http://connectcast.tv/popout/live/"+streamToMake+"></iframe>");
-        } else if(makeSite=="mxr") {
-            $("#stream"+whatDiv).append("<iframe "+standardSettings+" src='https://mixer.com/embed/player/"+streamToMake+"'></iframe>");
         } else if(makeSite=="rec") {
             $("#stream"+whatDiv).append("<iframe "+standardSettings+" src=//player.twitch.tv/?video="+streamToMake+"></iframe>");
         } else if(makeSite=="ath") {

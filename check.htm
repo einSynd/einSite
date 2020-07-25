@@ -316,12 +316,12 @@ function processCookies(){
         if (newObject.site == "hbx"){
             newObject.site = "sma";
         }
-        
-        //Beam changed to Mixer, everything else should be same, so just change site
-        if (newObject.site == "bea"){
-            newObject.site = "mxr";
-        }
-            
+		
+		//Mixer has closed, so skip loading any saved Mixer streams
+		if (newObject.site == "mxr"){
+			return true;
+		}
+      
 		watchedStreams[num] = newObject;
 		
 		var stream = newObject.stream;
@@ -455,15 +455,6 @@ function checkStream(toCheck){
 			error: errorHandler,
 			statusCode: statusCodeHandler
 		});
-    //Mixer API request (Formerly Beam)
-    } else if(site == "mxr"){
-        return $.ajax({
-            url: 'https://mixer.com/api/v1/channels/' + stream,
-            timeout: 10000,
-            success: function(data) { handleMixer(data, toCheck); },
-			error: errorHandler,
-			statusCode: statusCodeHandler
-        });
 	} else if(site == "ath") {
 		return $.ajax({
 			url: 'https://api.angelthump.com/v2/streams/' + stream,
@@ -655,29 +646,6 @@ function handleSmashcast(data, toCheck) {
 			watchedStreams[toCheck].wasLive = false;
 		}
 	}
-}
-
-//Set div for handled Mixer stream.
-function handleMixer(data, toCheck){
-//  console.log(data);
-    var divID = "#" + toCheck;
-	var tempObj = watchedStreams[toCheck];
-	var stream = tempObj.stream;
-	var site = tempObj.site;
-	var wasLive = tempObj.wasLive;
-    
-    if( data.online == true) {
-        var link = "<a href='//mixer.com/" + stream + "' target='_blank'>";
-        var game = (data.type != null) ? " - " + data.type.name : "";
-        $(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewersCurrent + "v]: " + data.name + game);
-        setLiveStatus(divID, "live");
-        
-        game = (data.type != null) ? " [" + data.type.name + "]" : "";
-        $(divID).prop("title",data.name + game + " -- " + data.viewersCurrent + " viewers.");
-    } else {
-        $(divID).html(getFavicon(site) + stream + ": Offline");
-        setLiveStatus(divID, "offline");
-    }
 }
 
 function handleAngelthump(data, toCheck){
@@ -1465,7 +1433,7 @@ Enter a stream name and select a site to check its status:<br />(or to remove fr
 <input type="text" name="checkStream" value="" id="checkStream" />
 <select name="site" id="site">
 	<option value="ttv" selected>Twitch.TV</option><option value="sma">Smashcast</option>
-    <option value="mxr">Mixer</option><option value="ath">Angelthump</option>
+    <option value="ath">Angelthump</option>
 	<option value="utv">UStream</option><option value="lst">Livestream</option>
 </select><div id="dropdownIcon"></div><br />
 <input type="submit" value="Check Status" name="submit" id="submit" onclick="addStream();" />
