@@ -319,6 +319,7 @@ function processCookies(){
 		
 		//Mixer has closed, so skip loading any saved Mixer streams
 		if (newObject.site == "mxr"){
+			watchedStreams[num] = false;
 			return true;
 		}
       
@@ -338,6 +339,10 @@ function processCookies(){
 
 		setLiveStatus(newDivID, "info");
 	});
+	
+	//Remove any streams set to "false" from the array and cookie
+	watchedStreams = watchedStreams.filter(stream => stream != false);
+	$.cookie("watchedStreams",watchedStreams.join(";"), { expires: 30 });
 }
 
 //Return a simple div of either site favicon or (site) based on favicon setting
@@ -845,7 +850,7 @@ function addStream() {
     
     //Check each stream div (.stream) to see if it already exists.
     $.each(watchedStreams, function(num, obj) {
-        if( obj.stream == stream ){
+        if( obj.stream.toLowerCase() == stream.toLowerCase() ){
             if( obj.site == site ) {
                 exists = true;
                 return false;
@@ -857,6 +862,7 @@ function addStream() {
     if( exists ) {
         alert("This stream is already being checked for.");
         console.log("Already checked: '" + stream + "' on " + site);
+		return false;
     } else {
         //Length returns total number, divs start at zero, so length should be one above what we have.
         var newDivID = $(".stream").length;
@@ -1038,7 +1044,6 @@ function removeStream(){
 	$.each(watchedStreams, function(id,obj) {
 		var curStream = obj.stream;
 		var curSite = obj.site;
-		
 		if( curStream.toLowerCase() == stream.toLowerCase() ){
 			if( curSite.toLowerCase() == site.toLowerCase() ){
 				//	console.log("Matched at #" + id);
