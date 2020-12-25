@@ -93,7 +93,7 @@ function changeColor(bgColor){
 }
 
 function fileCheck(date, first){
-    if(date==""){ date="today"; }
+    if(date==""){ date="2018-05-04"; }
     //Get today minus five hours because GMT-5
     var today = new Date();
     today.setTime(today.getTime() - 5 * 60 * 60 * 1000);
@@ -107,7 +107,7 @@ function fileCheck(date, first){
     
     $("#currentLog").val(date);
     $("#content").html("Fetching log, please wait.");
-    file = "http://" + window.location.host + "/vgzlogs/"+date+".log";
+    file = "http://" + window.location.host + "/vgzlogs_irssi/"+date+".log";
     $.get(file)
     .done(function(data) { 
     
