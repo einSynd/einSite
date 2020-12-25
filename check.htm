@@ -376,7 +376,11 @@ function makePopup(stream) {
             "left=" + left + ",top=" + top + "screenX=" + left + ",screenY=" + top;
 
 	windowFeatures = "width=" + width + ",height=" + height + windowFeatures;
-	window.open(host + "/ls.php?s="+stream, stream.split(",")[0], windowFeatures);
+	if( stream.split(",")[1] == "ttv" ) {
+		window.open("https://player.twitch.tv/?channel=" + stream.split(":")[0] + "&parent=twitch.tv", stream.split(",")[0], windowFeatures);
+	} else {
+		window.open(host + "/ls.php?s="+stream, stream.split(",")[0], windowFeatures);
+	}
 }
 
 //Twitch changed their embeds to require SSL, so just launch their popout window URL I guess
@@ -440,11 +444,11 @@ function checkStream(toCheck){
 		});	
 
 	//Smashcast API request (Formerly Hitbox)
-    //  Smashcast currently doesn't allow cross-domain requests. Just keep Hitbox's.
 	} else if(site == "sma"){
 		return $.ajax({
 			type: 'GET',
-            url: '//www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
+            //url: '//www.hitbox.tv/api/media/live/'+stream+'?nocache=true',
+			url: '//api.smashcast.tv/media/live/' +stream+'?nocache=true',
 			timeout: 10000,
 			success: function(data) { handleSmashcast(data, toCheck); },
 			error: errorHandler,
@@ -526,7 +530,7 @@ function handleTwitch(data, toCheck) {
 			var link = "<a href='"+data.channel.url+"' target='_blank'>";
             var game = (data.game != null) ? " - " + data.game : "";
 			$(divID).html(nowrap + getFavicon(site) + link + stream + "</a></div> [" + data.viewers + "v]: " + data.channel.status + game);
-            if( data.stream_type == "live" || data.channel.status.indexOf("↪ Rerun") == -1){
+            if( data.stream_type == "live" || data.channel.status.toLowerCase().indexOf("rerun") == -1){
                 setLiveStatus(divID, "live");
             } else {
                 setLiveStatus(divID, "rerun");
