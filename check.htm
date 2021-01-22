@@ -268,12 +268,20 @@ function processCookies(){
 		//	Forces the string to be converted into a boolean.
 		listMode = ($.cookie("listMode") == "true");
 		$.cookie("listMode", listMode, { expires: 30 });
+	} else {
+		//List mode default = off
+		listMode = false;
+		$.cookie("listMode", listMode, { expires: 30 });
 	}
 	
 	if($.cookie("favicons")){
 		//If a cookie exists named "favicons", set the variable "favicons"
 		//	Toggles whether stream site is shown via favicon or in parentheses.
 		favicons = ($.cookie("favicons") == "true");
+		$.cookie("favicons", favicons, { expires: 30 });
+	} else {
+		//Favicon display default = on
+		favicons = true;
 		$.cookie("favicons", favicons, { expires: 30 });
 	}
     
@@ -282,6 +290,22 @@ function processCookies(){
 		//	Toggles whether live streams are sorted to the top.
 		sorting = ($.cookie("sorting") == "true");
 		$.cookie("sorting", sorting, { expires: 30 });
+	} else {
+		//Sorting default = on
+		sorting = true;
+		$.cookie("sorting", sorting, { expires: 30 });
+	}
+	
+	if($.cookie("twitchChat")){
+		//If a cookie exists named "twitchChat", set the variable "twitchChat"
+		//	Toggles whether Twitch stream popouts also create a Twitch chat popout
+		//	Used to have a button for this on the stream player, but Twitch kneecapped their embeds
+		twitchChat = ($.cookie("twitchChat") == "true");
+		$.cookie("twitchChat", twitchChat, { expires: 30 });
+	} else {
+		//Twitch chat default = on
+		twitchChat = true;
+		$.cookie("twitchChat", twitchChat, { expires: 30 });
 	}
 	
 	if($.cookie("colors")){
@@ -375,9 +399,15 @@ function makePopup(stream) {
 	var windowFeatures = ",menubar=no,toolbar=no,scrollbars=no,resizable=yes," +
             "left=" + left + ",top=" + top + "screenX=" + left + ",screenY=" + top;
 
+	var chatFeatures = "width=" + height + ",height=" + width + windowFeatures;
 	windowFeatures = "width=" + width + ",height=" + height + windowFeatures;
+	
 	if( stream.split(",")[1] == "ttv" ) {
 		window.open("https://player.twitch.tv/?channel=" + stream.split(":")[0] + "&parent=twitch.tv", stream.split(",")[0], windowFeatures);
+		console.log(twitchChat);
+		if (twitchChat) {
+			window.open("https://www.twitch.tv/popout/"+stream.split(":")[0]+"/chat?popout=", stream.split(",")[0]+" chat", chatFeatures);
+		}
 	} else {
 		window.open(host + "/ls.php?s="+stream, stream.split(",")[0], windowFeatures);
 	}
@@ -784,13 +814,13 @@ function handleMassTwitch(data, twitchStreams){
         thisStream.status = nowrap + favicon + link + thisStream.name + "</a></div> [" + response.viewers + "v]: " + response.channel.status + game;
         
 		//Twitch removed the "rerun" status, now have to detect it from stream status
-		if( response.channel.status.indexOf("↪ Rerun") > -1 ) {
+		if( response.channel.status.indexOf("Rerun") > -1 ) {
 			twitchType = "rerun";
 		}
 		
         //Change the "game" to fit better for a tooltip
         game = (response.game != null) ? " [" + response.game + "]" : "";
-        thisStream.tooltip = response.channel.status + game + " -- " + response.viewers + " viewers.";
+        thisStream.tooltip = thisStream.name + " streaming " + response.channel.status + game + " -- " + response.viewers + " viewers.";
         thisStream.liveType = twitchType;
     });
     
@@ -1303,6 +1333,13 @@ function toggleList() {
 	$.cookie("listMode", listMode, { expires: 30 });
 }
 
+function toggleTwitchChat()	{
+	twitchChat = !twitchChat;  //Invert variable
+	$("#twitchChatCheck").prop("checked", twitchChat); 
+	
+	$.cookie("twitchChat", twitchChat, { expires: 30 });
+}
+
 function doubleClick(divID) {
 	
 	var tempID = $(divID).prop("id");
@@ -1405,6 +1442,7 @@ $(document).ready(function(){
     
 	$("#faviconCheck").prop("checked", favicons); //Set the checkbox based on favicon variable
     $("#sortLiveCheck").prop("checked", sorting);
+	$("#twitchChatCheck").prop("checked", twitchChat);
     
 	$("#site").change(); //Auto-trigger it to set up the first one.
 	
@@ -1461,6 +1499,7 @@ If the description is too long, mouseover the box for a tooltip.<br />
 <div class="anOption" onclick="toggleFavicons();"><input type="checkbox" name="favicons" id="faviconCheck"/>Show Favicons</div>
 <div class="anOption" onclick="toggleSorting();"><input type="checkbox" name="sorting" id="sortLiveCheck"/>Sort Live Streams</div>
 <div class="anOption" onclick="toggleList();"><input type="checkbox" name="listModeCheck" id="listModeCheck"/>List Mode</div>
+<div class="anOption" onclick="toggleTwitchChat();"><input type="checkbox" name="twitchChat" id="twitchChatCheck"/>Open Twitch Chat</div>
 </div>
 <!--<div class="horizLabel"><span>COLOR</span></div>-->
 <div id="colorsList">
