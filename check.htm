@@ -1452,7 +1452,7 @@ $(document).ready(function(){
 	//	filters out double clicks to open popups for the clicked stream.
 	$("#streamArea").on("dblclick", ".stream", function() { doubleClick(this); });
 	
-	$(".stream").mousedown(function(event) { 
+	$("#streamArea").on("mousedown", ".stream", function(event) { 
 		if( event.which == 2 ){
 			middleClick(this); 
 		}
