@@ -112,6 +112,7 @@ body { margin: 0; }
 
 .anOption {
 	border: 1px solid #000;
+	border-radius: 10px;
 	width: 48%;
 	margin: 2px;
 }
@@ -132,8 +133,9 @@ body { margin: 0; }
 
 .colorReset {
 	margin: 0 2px;
+	border-radius: 10px;
+	padding: 0 0.5em;
 	border: 1px solid #000;
-	width: 15%;
 	right: 0;
 }
 
@@ -508,7 +510,7 @@ function checkStream(toCheck){
 		});
 	} else if(site == "ath") {
 		return $.ajax({
-			url: 'https://api.angelthump.com/v2/streams/' + stream,
+			url: 'https://api.angelthump.com/v3/streams?username=' + stream,
             timeout: 10000,
             success: function(data) { handleAngelthump(data, toCheck); },
 			error: errorHandler,
@@ -705,11 +707,12 @@ function handleAngelthump(data, toCheck){
 	var stream = tempObj.stream;
 	var site = tempObj.site;
 	var wasLive = tempObj.wasLive;
+	data = data[0];
 	
-	if( data.type == "live" ){
+	if( data != undefined && data.type == "live" ){
 		var link = "<a href='//angelthump.com/" + stream + "' target='_blank'>";
 		
-		$(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewer_count + "v]:" + data.user.title);
+		$(divID).html(getFavicon(site) + link + stream + "</a> [" + data.viewer_count + "v]: " + data.user.title);
         setLiveStatus(divID, "live");
 	} else {
 		$(divID).html(getFavicon(site) + stream + ": Offline");
